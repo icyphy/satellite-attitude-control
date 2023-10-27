@@ -1,0 +1,62 @@
+<mujoco model="reaction wheel">
+  <compiler angle="radian"/> 
+	<option timestep="0.001" iterations="20" gravity="0 0 0">
+		<flag sensornoise="enable"/>
+	</option>
+	
+  <default>
+		<geom rgba="0.45 0.6 0.6 1"/>
+    <!--<site type="sphere" size="0.02"/>-->
+	</default>
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="32" height="512"/>
+    <!--
+    <texture name="body" type="cube" builtin="flat" mark="cross" width="128" height="128" rgb1="0.8 0.6 0.4" rgb2="0.8 0.6 0.4" markrgb="1 1 1" random="0.01"/>
+    <material name="body" texture="body" texuniform="true" rgba="0.8 0.6 .4 1"/>
+    <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1=".1 .2 .3" rgb2=".2 .3 .4"/>
+    <material name="grid" texture="grid" texrepeat="1 1" texuniform="true" reflectance=".2"/>
+    -->
+  </asset>
+
+	<worldbody>
+		<light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5 "/>
+
+		<body name="platform" pos="0 0 0">
+      <site name="site-platform" pos="0 0 0"/>
+      <joint name="platform-joint" type="hinge" axis="0 1 0"/>
+      <!--<geom name="satellite" type="box" pos="0 0 0" size="0.3 0.1 0.3" density="100"/>-->
+
+      <geom name="rod" type="cylinder" pos="0 0 0" size=".4 .05" density="10" euler="1.57 0 0"/>
+      <!--<geom name="stuff" type="cylinder" pos="0 -0.1 0" size=".1 .1" density="100"/>-->
+
+      <body name="wheel" pos="0 -0.15 0">
+        <joint name="axis" type="hinge" axis="0 1 0"/>
+        <geom name="wheel" type="cylinder" pos="0 0 0" size=".1 .05" density="100" euler="1.57 0 0" rgba="0.9 0 0 1"/>
+        <!--<geom name="stuff2" type="cylinder" pos="0 0.05 0" size=".05 .05" density="100"/>-->
+      </body>
+    </body>
+  </worldbody>
+  
+  <!--<tendon>
+		<spatial name="lThread" width="0.01">
+			<site site="lplatform"/>
+			<site site="lwheel"/>
+    </spatial>
+  </tendon> -->
+    <!--<spatial name="rThread"  width="0.01">
+			<site site="rBeam"/>
+			<site site="rFix"/>
+    </spatial>-->
+
+	<actuator>
+		<motor joint='axis' name='motor'/>
+	</actuator>
+
+	<sensor>
+    <!--<gyro name="gyro" site="site-platform"/>-->
+    <jointpos name="platform_sensor" joint="platform-joint" noise="0.001"/>
+    <jointpos name="wheel_sensor" joint="axis" noise="0.001"/>
+    <!--<frameangvel name="platform_sensor_vel" objtype="body" objname="platform"/>-->
+	</sensor>
+</mujoco>
+

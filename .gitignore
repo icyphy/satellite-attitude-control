@@ -1,0 +1,6 @@
+bin
+src-gen
+include
+share
+lib
+MUJOCO_LOG.TXT

@@ -1,0 +1,280 @@
+target C {
+    //scheduler: STATIC,
+    workers: 1,
+    timeout: 810 weeks, // 15 years of lifetime
+}
+
+
+preamble {=
+
+#ifndef HEADER_GUARD
+#define HEADER_GUARD
+
+#include <mujoco/mujoco.h>
+#include <GLFW/glfw3.h>
+
+// structs that handle user input
+struct KeyboardInput {
+    GLFWwindow* window;
+    int key;
+    int scancode;
+    int act;
+    int mods;
+};
+
+struct MouseButtonInput {
+    GLFWwindow* window;
+    int button;
+    int act;
+    int mods;
+};
+
+struct MouseMoveInput {
+    GLFWwindow* window;
+    double xpos;
+    double ypos;
+};
+
+struct ScrollInput {
+    GLFWwindow* window;
+    double xoffset;
+    double yoffset;
+};
+
+#endif //HEADER_GUARD
+
+=}
+
+reactor MujocoSimulator(
+    file: char* = "./example/example.xml", 
+    time_resolution: time = 10 msec, 
+    visualize: bool = false,
+    fps_period: time = 20 msec
+    ) {
+
+preamble {=
+void* keyboard_action = NULL;
+void* mouse_button_action = NULL;
+void* mouse_move_action = NULL;
+void* scroll_action = NULL;
+
+// keyboard callback
+void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods) {
+  struct KeyboardInput keyboard_struct = {window, key, scancode, act, mods};
+  //lf_schedule(keyboard_action, MSEC(0), keyboard_struct);
+}
+
+void mouse_button(GLFWwindow* window, int button, int act, int mods) {
+  struct MouseButtonInput mouse_struct = {window, button, act, mods};
+  //lf_schedule(mouse_button_action, MSEC(0), keyboard_struct);
+}
+
+void mouse_move(GLFWwindow* window, double xpos, double ypos) {
+  struct MouseMoveInput mouse_move_struct = {window, xpos, ypos};
+  //lf_schedule(MSEC(0), keyboard_struct);
+}
+
+void scroll(GLFWwindow* window, double xoffset, double yoffset) {
+  struct ScrollInput scroll_struct = {window, xoffset, yoffset};
+  //lf_schedule(MSEC(0), keyboard_struct);
+}
+
+=}
+
+    timer simulation_step_timer(0, 10ms);
+    timer draw_frame_timer(0, 40ms);
+
+    physical action keyboard_physical_action: {=struct KeyboardInput=};
+    physical action mouse_button_physical_action: {=struct MouseButtonInput=};
+    physical action mouse_move_physical_action: {=struct MouseMoveInput=};
+    physical action scroll_physical_action: {=struct ScrollInput=};
+
+    state error: char[1000];
+    state model: mjModel*;
+    state data: mjData*;
+
+    state camera: mjvCamera;                      // abstract camera
+    state options: mjvOption;                      // visualization options
+    state scene: mjvScene;                       // abstract scene
+    state context: mjrContext;                     // custom GPU context
+    state window: GLFWwindow*;
+    state button_left: bool;
+    state button_middle: bool;
+    state button_right: bool;
+    state lastx: double = 0;
+    state lasty: double = 0;
+    
+    output call_controller: mjData*;
+    output output_model: mjModel*;
+    input return_controller: int;
+
+    reaction(startup) -> output_model, keyboard_physical_action, mouse_button_physical_action, mouse_move_physical_action, scroll_physical_action {=
+        // load model from file and check for errors
+        self->model = mj_loadXML(self->file, NULL, self->error, 1000);
+        if (self->model == NULL) {
+            printf("MODEL is NULL exiting");
+            exit(1);
+        } else {
+            // make data corresponding to model
+            self->data = mj_makeData(self->model);
+
+            if (self->visualize) {
+                // init GLFW, create window, make OpenGL contexttext current, request v-sync
+                glfwInit();
+                self->window = glfwCreateWindow(1200, 900, "MujocoSimulator", NULL, NULL);
+                glfwMakeContextCurrent(self->window);
+                glfwSwapInterval(1);
+
+                // initialize visualization data structures
+                mjv_defaultCamera(&self->camera);
+                mjv_defaultOption(&self->options);
+                mjr_defaultContext(&self->context);
+
+                // create scene and contexttext
+                mjv_makeScene(self->model, &self->scene, 2000);
+                mjr_makeContext(self->model, &self->context, mjFONTSCALE_150);
+
+                // set handlers for physical actions
+                keyboard_action = &keyboard_physical_action;
+                mouse_button_action = &mouse_button_physical_action;
+                mouse_move_action = &mouse_move_physical_action;
+                scroll_action = &scroll_physical_action;
+
+                // install GLFW mouse and keyboard callbacks
+                //glfwSetKeyCallback(self->window, keyboard);
+                //glfwSetCursorPosCallback(self->window, mouse_move);
+                //glfwSetMouseButtonCallback(self->window, mouse_button);
+                //glfwSetScrollCallback(self->window, scroll);
+
+                // TODO: remove until bodyless methods are implemented
+                // get framebuffer viewport
+                mjrRect viewport = {0, 0, 0, 0};
+                glfwGetFramebufferSize(self->window, &viewport.width, &viewport.height);
+
+                //setBackgroundRgb(model, 255, 255, 1);
+
+                // update scene and render
+                mjv_updateScene(self->model, self->data, &self->options, NULL, &self->camera, mjCAT_ALL, &self->scene);
+                mjr_render(viewport, &self->scene, &self->context);
+
+                // swap OpenGL buffers (blocking call due to v-sync)
+                glfwSwapBuffers(self->window);
+                
+                lf_set(output_model, self->model);
+            }
+        }
+        fprintf(stdout, "Start Up of MujocoSimulator is done!!\n");
+        fflush(stdout);
+    =}
+
+
+
+    reaction(simulation_step_timer) -> call_controller {=
+        fprintf(stdout, "Simulation Step\n");
+        fflush(stdout);
+        mj_step(self->model, self->data);
+        lf_set(call_controller, self->data);
+    =}
+
+    reaction(return_controller) {=
+        fprintf(stdout, "Return Controller\n");
+        fflush(stdout);
+        //mj_step1(self->model, self->data);
+        fprintf(stdout, "Step 2 Calculated\n");
+        fflush(stdout);
+    =}
+
+    reaction(draw_frame_timer) {=
+        fprintf(stdout, "Draw Frame\n");
+        if(self->visualize) {
+            // get framebuffer viewport
+            mjrRect viewport = {0, 0, 0, 0};
+            glfwGetFramebufferSize(self->window, &viewport.width, &viewport.height);
+
+            // update scene and render
+            mjv_updateScene(self->model, self->data, &self->options, NULL, &self->camera, mjCAT_ALL, &self->scene);
+            mjr_render(viewport, &self->scene, &self->context);
+
+            // swap OpenGL buffers (blocking call due to v-sync)
+            glfwSwapBuffers(self->window);
+            // process pending GUI events, call GLFW callbacks
+            //TODO: glfwPollEvents();
+        }
+    =}
+
+
+    reaction(keyboard_physical_action) {=
+        struct KeyboardInput user_input = keyboard_physical_action->value;
+
+        // backspace: reset simulation
+        if (user_input.act == GLFW_PRESS && user_input.key == GLFW_KEY_BACKSPACE) {
+            mj_resetData(self->model, self->data);
+            mj_forward(self->model, self->data);
+        }
+    =}
+    reaction(mouse_button_physical_action) {=
+        // update button state
+        self->button_left = (glfwGetMouseButton(self->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+        self->button_middle = (glfwGetMouseButton(self->window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS);
+        self->button_right = (glfwGetMouseButton(self->window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
+
+        // update mouse position
+        glfwGetCursorPos(self->window, &self->lastx, &self->lasty);
+    =}
+
+    reaction(mouse_move_physical_action) {=
+        struct MouseMoveInput user_input = mouse_move_physical_action->value;
+
+        // no buttons down: nothing to do
+        if (!self->button_left && !self->button_middle && !self->button_right) {
+            return;
+        }
+
+        // compute mouse displacement, save
+        double dx = user_input.xpos - self->lastx;
+        double dy = user_input.ypos - self->lasty;
+        self->lastx = user_input.xpos;
+        self->lasty = user_input.ypos;
+
+        // get current window size
+        int width, height;
+        glfwGetWindowSize(self->window, &width, &height);
+
+        // get shift key state
+        bool mod_shift =
+            (glfwGetKey(self->window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(self->window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS);
+
+        // determine action based on mouse button
+        mjtMouse action;
+        if (self->button_right) {
+            action = mod_shift ? mjMOUSE_MOVE_H : mjMOUSE_MOVE_V;
+        } else if (self->button_left) {
+            action = mod_shift ? mjMOUSE_ROTATE_H : mjMOUSE_ROTATE_V;
+        } else {
+            action = mjMOUSE_ZOOM;
+        }
+
+        // move camera
+        mjv_moveCamera(self->model, action, dx / height, dy / height, &self->scene, &self->camera);
+    =};
+
+    reaction(scroll_physical_action) {=
+        struct ScrollInput user_input = scroll_physical_action->value;
+        // emulate vertical mouse motion = 5% of window height
+        mjv_moveCamera(self->model, mjMOUSE_ZOOM, 0, -0.05 * user_input.yoffset, &self->scene, &self->camera);
+    =}
+
+    reaction(shutdown) {=
+        fprintf(stdout, "Shutdown\n");
+        // free model and data
+        mj_deleteData(self->data);
+        mj_deleteModel(self->model);
+
+        if (self->visualize) {
+            // close GLFW, free visualization storage
+            glfwTerminate();
+            mjv_freeScene(&self->scene);
+            mjr_freeContext(&self->context);
+        }
+    =}
+}
