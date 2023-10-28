@@ -1,5 +1,5 @@
 target C {
-    //scheduler: STATIC,
+    scheduler: STATIC,
     workers: 1,
     timeout: 810 weeks, // 15 years of lifetime
 }
@@ -48,35 +48,50 @@ struct ScrollInput {
 reactor MujocoSimulator(
     file: char* = "./example/example.xml", 
     time_resolution: time = 10 msec, 
-    visualize: bool = false,
+    visualize: bool = true,
     fps_period: time = 20 msec
     ) {
 
 preamble {=
-void* keyboard_action = NULL;
-void* mouse_button_action = NULL;
-void* mouse_move_action = NULL;
-void* scroll_action = NULL;
+_mujocosimulator_keyboard_physical_action_t* keyboard_action = NULL;
+_mujocosimulator_mouse_button_physical_action_t* mouse_button_action = NULL;
+_mujocosimulator_mouse_move_physical_action_t* mouse_move_action = NULL;
+_mujocosimulator_scroll_physical_action_t* scroll_action = NULL;
 
 // keyboard callback
 void keyboard(GLFWwindow* window, int key, int scancode, int act, int mods) {
-  struct KeyboardInput keyboard_struct = {window, key, scancode, act, mods};
-  //lf_schedule(keyboard_action, MSEC(0), keyboard_struct);
+  struct KeyboardInput* input_struct = malloc(sizeof(struct KeyboardInput));
+  input_struct->window = window;
+  input_struct->key = key;
+  input_struct->scancode = scancode;
+  input_struct->act = act;
+  input_struct->mods = mods;
+  lf_schedule_copy(keyboard_action, MSEC(0), input_struct, sizeof(struct KeyboardInput));
 }
 
 void mouse_button(GLFWwindow* window, int button, int act, int mods) {
-  struct MouseButtonInput mouse_struct = {window, button, act, mods};
-  //lf_schedule(mouse_button_action, MSEC(0), keyboard_struct);
+  struct MouseButtonInput* input_struct = malloc(sizeof(struct MouseButtonInput));
+  input_struct->window = window;
+  input_struct->button = button;
+  input_struct->act = act;
+  input_struct->mods = mods;
+  lf_schedule_copy(mouse_button_action, MSEC(0), input_struct, sizeof(struct MouseButtonInput));
 }
 
 void mouse_move(GLFWwindow* window, double xpos, double ypos) {
-  struct MouseMoveInput mouse_move_struct = {window, xpos, ypos};
-  //lf_schedule(MSEC(0), keyboard_struct);
+  struct MouseMoveInput* input_struct = malloc(sizeof(struct MouseMoveInput));
+  input_struct->window = window;
+  input_struct->xpos = xpos;
+  input_struct->ypos = ypos;
+  lf_schedule_copy(mouse_move_action, MSEC(0), input_struct, sizeof(struct MouseMoveInput));
 }
 
 void scroll(GLFWwindow* window, double xoffset, double yoffset) {
-  struct ScrollInput scroll_struct = {window, xoffset, yoffset};
-  //lf_schedule(MSEC(0), keyboard_struct);
+  struct ScrollInput* input_struct = malloc(sizeof(struct ScrollInput));
+  input_struct->window = window;
+  input_struct->xoffset = xoffset;
+  input_struct->yoffset = yoffset;
+  lf_schedule_copy(scroll_action, MSEC(0), input_struct, sizeof(struct ScrollInput));
 }
 
 =}
@@ -84,10 +99,10 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
     timer simulation_step_timer(0, 10ms);
     timer draw_frame_timer(0, 40ms);
 
-    physical action keyboard_physical_action: {=struct KeyboardInput=};
-    physical action mouse_button_physical_action: {=struct MouseButtonInput=};
-    physical action mouse_move_physical_action: {=struct MouseMoveInput=};
-    physical action scroll_physical_action: {=struct ScrollInput=};
+    physical action keyboard_physical_action: {=struct KeyboardInput*=};
+    physical action mouse_button_physical_action: {=struct MouseButtonInput*=};
+    physical action mouse_move_physical_action: {=struct MouseMoveInput*=};
+    physical action scroll_physical_action: {=struct ScrollInput*=};
 
     state error: char[1000];
     state model: mjModel*;
@@ -105,10 +120,9 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
     state lasty: double = 0;
     
     output call_controller: mjData*;
-    output output_model: mjModel*;
-    input return_controller: int;
+    input return_controller: float;
 
-    reaction(startup) -> output_model, keyboard_physical_action, mouse_button_physical_action, mouse_move_physical_action, scroll_physical_action {=
+    reaction(startup) -> keyboard_physical_action, mouse_button_physical_action, mouse_move_physical_action, scroll_physical_action {=
         // load model from file and check for errors
         self->model = mj_loadXML(self->file, NULL, self->error, 1000);
         if (self->model == NULL) {
@@ -135,16 +149,16 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
                 mjr_makeContext(self->model, &self->context, mjFONTSCALE_150);
 
                 // set handlers for physical actions
-                keyboard_action = &keyboard_physical_action;
-                mouse_button_action = &mouse_button_physical_action;
-                mouse_move_action = &mouse_move_physical_action;
-                scroll_action = &scroll_physical_action;
+                keyboard_action = keyboard_physical_action;
+                mouse_button_action = mouse_button_physical_action;
+                mouse_move_action = mouse_move_physical_action;
+                scroll_action = scroll_physical_action;
 
                 // install GLFW mouse and keyboard callbacks
-                //glfwSetKeyCallback(self->window, keyboard);
-                //glfwSetCursorPosCallback(self->window, mouse_move);
-                //glfwSetMouseButtonCallback(self->window, mouse_button);
-                //glfwSetScrollCallback(self->window, scroll);
+                glfwSetKeyCallback(self->window, keyboard);
+                glfwSetCursorPosCallback(self->window, mouse_move);
+                glfwSetMouseButtonCallback(self->window, mouse_button);
+                glfwSetScrollCallback(self->window, scroll);
 
                 // TODO: remove until bodyless methods are implemented
                 // get framebuffer viewport
@@ -159,29 +173,22 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
 
                 // swap OpenGL buffers (blocking call due to v-sync)
                 glfwSwapBuffers(self->window);
-                
-                lf_set(output_model, self->model);
             }
         }
-        fprintf(stdout, "Start Up of MujocoSimulator is done!!\n");
-        fflush(stdout);
+        printf("Start Up of MujocoSimulator is done!!\n");
     =}
 
-
-
     reaction(simulation_step_timer) -> call_controller {=
-        fprintf(stdout, "Simulation Step\n");
-        fflush(stdout);
         mj_step(self->model, self->data);
-        lf_set(call_controller, self->data);
+        mjData* new_data = mj_makeData(self->model);
+        mj_copyData(new_data, self->model, self->data);
+        lf_set(call_controller, new_data);
     =}
 
     reaction(return_controller) {=
-        fprintf(stdout, "Return Controller\n");
-        fflush(stdout);
+        printf("CTRL = %f\n", return_controller->value);
+        self->data->ctrl[0] = return_controller->value;
         //mj_step1(self->model, self->data);
-        fprintf(stdout, "Step 2 Calculated\n");
-        fflush(stdout);
     =}
 
     reaction(draw_frame_timer) {=
@@ -204,10 +211,13 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
 
 
     reaction(keyboard_physical_action) {=
-        struct KeyboardInput user_input = keyboard_physical_action->value;
+        fprintf(stdout, "keyboard input\n");
+        fflush(stdout);
+
+        struct KeyboardInput* user_input = keyboard_physical_action->value;
 
         // backspace: reset simulation
-        if (user_input.act == GLFW_PRESS && user_input.key == GLFW_KEY_BACKSPACE) {
+        if (user_input->act == GLFW_PRESS && user_input->key == GLFW_KEY_BACKSPACE) {
             mj_resetData(self->model, self->data);
             mj_forward(self->model, self->data);
         }
@@ -223,7 +233,9 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
     =}
 
     reaction(mouse_move_physical_action) {=
-        struct MouseMoveInput user_input = mouse_move_physical_action->value;
+        fprintf(stdout, "mouse move input\n");
+        fflush(stdout);
+        struct MouseMoveInput* user_input = mouse_move_physical_action->value;
 
         // no buttons down: nothing to do
         if (!self->button_left && !self->button_middle && !self->button_right) {
@@ -231,10 +243,10 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
         }
 
         // compute mouse displacement, save
-        double dx = user_input.xpos - self->lastx;
-        double dy = user_input.ypos - self->lasty;
-        self->lastx = user_input.xpos;
-        self->lasty = user_input.ypos;
+        double dx = user_input->xpos - self->lastx;
+        double dy = user_input->ypos - self->lasty;
+        self->lastx = user_input->xpos;
+        self->lasty = user_input->ypos;
 
         // get current window size
         int width, height;
@@ -259,9 +271,11 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
     =};
 
     reaction(scroll_physical_action) {=
-        struct ScrollInput user_input = scroll_physical_action->value;
+        fprintf(stdout, "scroll input\n");
+        fflush(stdout);
+        struct ScrollInput* user_input = scroll_physical_action->value;
         // emulate vertical mouse motion = 5% of window height
-        mjv_moveCamera(self->model, mjMOUSE_ZOOM, 0, -0.05 * user_input.yoffset, &self->scene, &self->camera);
+        mjv_moveCamera(self->model, mjMOUSE_ZOOM, 0, -0.05 * user_input->yoffset, &self->scene, &self->camera);
     =}
 
     reaction(shutdown) {=
