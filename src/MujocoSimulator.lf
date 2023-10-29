@@ -187,7 +187,8 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
 
     reaction(return_controller) {=
         printf("CTRL = %f\n", return_controller->value);
-        self->data->ctrl[0] = return_controller->value;
+        //self->data->ctrl[0] = return_controller->value;
+        self->data->ctrl[0] = 0.1;
         //mj_step1(self->model, self->data);
     =}
 
