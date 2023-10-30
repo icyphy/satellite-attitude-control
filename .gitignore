@@ -4,3 +4,6 @@ include
 share
 lib
 MUJOCO_LOG.TXT
+*.log
+*.csv
+*.aux
