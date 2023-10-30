@@ -97,7 +97,7 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
 =}
 
     timer simulation_step_timer(0, 10ms);
-    timer draw_frame_timer(0, 40ms);
+    timer draw_frame_timer(10ms, 40ms);
 
     physical action keyboard_physical_action: {=struct KeyboardInput*=};
     physical action mouse_button_physical_action: {=struct MouseButtonInput*=};
@@ -122,9 +122,9 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
     output call_controller: mjData*;
     input return_controller: float;
 
-    //@wcet(100 msec)
+    @wcet("100 ms")
     reaction(startup) -> keyboard_physical_action, mouse_button_physical_action, mouse_move_physical_action, scroll_physical_action {=
-        fprintf(stdout, "start up of simulator");
+        fprintf(stdout, "start up of simulator\n");
         // load model from file and check for errors
         self->model = mj_loadXML(self->file, NULL, self->error, 1000);
         if (self->model == NULL) {
@@ -180,7 +180,7 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
         printf("Start Up of MujocoSimulator is done!!\n");
     =}
 
-    //@wcet(100 msec)
+    @wcet("100 ms")
     reaction(simulation_step_timer) -> call_controller {=
         mj_step(self->model, self->data);
         mjData* new_data = mj_makeData(self->model);
@@ -188,13 +188,13 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
         lf_set(call_controller, new_data);
     =}
 
-    //@wcet(10 msec)
+    @wcet("10 ms")
     reaction(return_controller) {=
         printf("CTRL = %f\n", return_controller->value);
         self->data->ctrl[0] = return_controller->value;
     =}
 
-    //@wcet(100 msec)
+    @wcet("100 ms")
     reaction(draw_frame_timer) {=
         printf("Draw Frame\n");
         if(self->visualize) {
@@ -214,7 +214,7 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
     =}
 
 
-    //@wcet(50 msec)
+    @wcet("50 ms")
     reaction(keyboard_physical_action) {=
         fprintf(stdout, "keyboard input\n");
         fflush(stdout);
@@ -228,7 +228,7 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
         }
     =}
 
-    //@wcet(50 msec)
+    @wcet("50 ms")
     reaction(mouse_button_physical_action) {=
         // update button state
         self->button_left = (glfwGetMouseButton(self->window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
@@ -239,7 +239,7 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
         glfwGetCursorPos(self->window, &self->lastx, &self->lasty);
     =}
 
-    //@wcet(50 msec)
+    @wcet("50 ms")
     reaction(mouse_move_physical_action) {=
         fprintf(stdout, "mouse move input\n");
         fflush(stdout);
@@ -278,7 +278,7 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
         mjv_moveCamera(self->model, action, dx / height, dy / height, &self->scene, &self->camera);
     =};
 
-    //@wcet(50 msec)
+    @wcet("50 ms")
     reaction(scroll_physical_action) {=
         fprintf(stdout, "scroll input\n");
         fflush(stdout);
@@ -287,7 +287,7 @@ void scroll(GLFWwindow* window, double xoffset, double yoffset) {
         mjv_moveCamera(self->model, mjMOUSE_ZOOM, 0, -0.05 * user_input->yoffset, &self->scene, &self->camera);
     =}
 
-    //@wcet(100 msec)
+    @wcet("100 ms")
     reaction(shutdown) {=
         fprintf(stdout, "Shutdown\n");
         // free model and data

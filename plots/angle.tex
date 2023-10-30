@@ -10,19 +10,25 @@
         font=\bfseries\sffamily,
     ]
     \begin{axis}[
-	width=\textwidth,
-    height=10cm,
-    ylabel={Platform Angle / Wheel Speed}
+     axis y line*=left,
+  	 ymin=0, ymax=2,
+     xlabel={Time $t$ in seconds},
+     ylabel={Angle $\varphi$ in Radians},
     ]
-    \addplot [red!90] table [x={time}, y={platform_angle}]{\datatable};
-    \addplot [blue!90] table [x={time}, y={platform_speed}]{\datatable};
-    %\addplot[color=blue!50!cyan,smooth,tension=0.7,very thick] table [x index=0,y index=1,col sep=comma] {\datatable};
-    %\addplot[color=cyan!50!lime,very thick] coordinates{(0,5)(25,5)};
-    %\addplot[color=orange,very thick] coordinates{(0,11)(25,11)};
-    %\addplot[color=red!80!orange,very thick] coordinates{(19,24.2)(23,24.2)};
-    %\node[text=cyan!50!lime,fill=white,align=center,anchor=west,scale=0.8,inner sep=5pt] at (24.5,5){Base\\ Load};
-    %\node[color=orange,fill=white,align=center,anchor=west,scale=0.8,inner sep=5pt] at (24.5,11){Average\\ Load};
-    %\node[color=red!80!orange,fill=white,align=center,anchor=west,scale=0.8,inner sep=5pt] at (21.2,24.2){Maxium\\ Load};
+    \addplot [red!90] table [x={time}, y={platform_angle}]{\datatable};\label{plot_one}
+
+
+    \end{axis}
+    
+    \begin{axis}[
+  	axis y line*=right,
+  	axis x line=none,
+  	ymin=0, ymax=120,
+  	ylabel={ Angular Velocity $\omega$ in Hz}
+]
+	 \addplot [blue!90] table [x={time}, y={joint_velocity}]{\datatable};z \label{plot_two}
+	 \addlegendimage{/pgfplots/refstyle=plot_one} \addlegendentry{wheel velocity}
+	 \addlegendimage{/pgfplots/refstyle=plot_one} \addlegendentry{platform angle}
     \end{axis}
 
     \end{tikzpicture}
