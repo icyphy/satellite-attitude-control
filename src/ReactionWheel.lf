@@ -1,0 +1,250 @@
+/**
+ * @author Tassilo
+ * @author Shaokai
+ */
+
+
+target C {
+    cmake-include: ["./mujoco.cmake"],
+    scheduler: STATIC,
+    workers: 1,
+    timeout: 810 weeks, // 15 years of lifetime
+    /*
+    The following is required to start a GLFW window on macOS,
+    since a window can only be spawned from the main thread.
+    https://www.glfw.org/docs/3.3/intro_guide.html#thread_safety
+    */
+    // single-threaded: true,
+}
+
+import MujocoSimulator from "./MujocoSimulator.lf";
+
+preamble {=
+#include <mujoco/mujoco.h>
+#include <GLFW/glfw3.h>
+
+=}
+
+/**
+ * According to self site, gyroscopes operate at 6.6 kHz (i.e., with a period of ~152us).
+ * https://support.sbg-systems.com/sc/imu/latest/user-manual/sampling-and-sensors-specifications
+ */
+reactor Gyroscope(period=10ms) {
+    timer t(10ms, period)
+    state value: float
+
+    input sim: float;
+    output out: float
+
+    @wcet("100 usec")
+    reaction(t) -> out {=
+        lf_set(out, self->value);
+    =}
+
+    @wcet("100 usec")
+    reaction (sim) {=
+        self->value = sim->value;
+    =}
+}
+
+/**
+ * If the angular rate sensor is ADXRS300 from ANALOG DEVICES, then the sensor
+ * resonant frequency is 14 kHz (i.e., with a period of ~72us).
+ * https://www.analog.com/media/en/technical-documentation/data-sheets/ADXRS300.pdf
+ */
+reactor AngularRateSensor(period=10ms) {
+    timer t(10ms, period)
+    state value: float;
+
+    input sim: float;
+    output out: float
+
+    @wcet("100 usec")
+    reaction(t) -> out {=
+        lf_set(out, self->value);
+    =}
+
+    @wcet("100 usec")
+    reaction (sim) {=
+        self->value = sim->value;
+    =}
+}
+reactor Controller(period=100ms) {
+    input current_angle: float;
+    input current_speed: float;
+    input desired_angle: float;
+
+    state current_angle: float;
+    state current_speed: float;
+    state desired_angle: float;
+    state last_update: {=unsigned long=};
+    state last_error: float;
+    state error_accumulator: float;
+
+    output controll_signal: float;
+    logical action sendCommand;
+
+    @wcet("100 usec")
+    reaction(desired_angle) {=
+        self->desired_angle = desired_angle->value;
+    =}
+
+    @wcet("100 usec")
+    reaction(current_speed) {=
+        self->current_speed = current_speed->value;
+    
+    =}   
+
+    @wcet("100 usec")
+    reaction(current_angle) -> sendCommand {=
+        self->current_angle = current_angle->value;
+        lf_schedule(sendCommand, MSEC(5));
+    =}
+
+    @wcet("20 ms")
+    reaction(sendCommand) -> controll_signal {=
+        const double i_controller_value = -12;
+        const double p_controller_value = -8;
+        const double d_controller_value = -1;
+
+        if (self->last_update == 0.0){
+            self->last_update = lf_time_physical();
+            return;
+        }
+        
+        unsigned long current_tag = (lf_time_physical());
+
+        unsigned long time_diff = (current_tag - self->last_update);
+        printf("T = %lu OT = %lu DT = %lu\n", current_tag, self->last_update, time_diff);
+        double velocity_vector = (self->current_angle - self->desired_angle)/( ((float)time_diff) * 0.000001 );
+        double error = (self->current_angle - self->desired_angle);
+
+        float controll_vector =
+              p_controller_value * velocity_vector  // present component
+            + i_controller_value * self->error_accumulator // integral component
+            + d_controller_value * (self->last_error - error); // differential component
+
+        self->last_error = error;
+        self->last_update = current_tag;
+        self->error_accumulator = self->error_accumulator * 0.25 + error;
+        
+        printf("ANGLE = %f DESIRED ANGLE = %f MOTOR = %f\n", self->current_angle, self->desired_angle, controll_vector);
+
+        lf_set(controll_signal, controll_vector);
+    =} 
+
+    @wcet("100 ms")
+    reaction(shutdown) {==}
+}
+/**
+ * We would likely use a stepper motor here. A closed loop stepper driver can
+ * have a maximum driver pulse input frequency of 200 kHz (i.e., a period of 5 usec!).
+ * https://www.amazon.com/gp/product/B08Q79YTQW/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1
+ */
+reactor Motor(freq: float=1000.0) {
+    input in:float
+    output out: float;
+    
+    @wcet("25 usec")
+    reaction(in) -> out {=
+        lf_set(out, in->value);
+    =}
+}
+
+reactor UserInput {
+    preamble {=
+        float ANGLE_1 = 1.0;
+        float ANGLE_2 = -2.0;
+    =}
+
+    logical action delay: float;
+    output desired_angle: float;
+
+    @wcet("25 usec")
+    reaction(startup) -> delay {=
+        lf_schedule_copy(delay, 0, &ANGLE_1, sizeof(float));
+    =}
+    
+    @wcet("25 usec")
+    reaction (delay) -> desired_angle {=
+        lf_set(desired_angle, delay->value);
+    =}
+}
+
+reactor SimulatorInterface {
+    // interfacing with mujoco simulator
+    output simulator_ctrl: float;
+    input simulator_output: mjData*;
+
+    // interfacing with sensors
+    output sensor_value_gyro: float;
+    output sensor_value_ars: float;
+
+    // interfacing with controller
+    input controller_output: float;
+
+    state model: mjModel*;
+    state motor_output: float;
+    state file: FILE*;
+
+    @wcet("50 ms")
+    reaction (startup) {=
+        FILE *fpt;
+        self->file = fopen("data.csv", "w+");
+
+        if (self->file == NULL) {
+            fprintf(stderr, "file cannot be opened");
+            exit(1);
+        }
+        fprintf(self->file,"time, platform_angle, joint_velocity\n");
+    =}
+
+    @wcet("50 usec")
+    reaction (controller_output) {=
+        self->motor_output = controller_output->value;
+    =}
+
+    @wcet("50 ms")
+    reaction (simulator_output) -> sensor_value_ars, sensor_value_gyro, simulator_ctrl {=
+        mjData* simulation = simulator_output->value;
+
+        fprintf(self->file, "%f, %f, %f\n", simulation->time * 1000.0, simulation->sensordata[0], simulation->sensordata[1]);
+
+        lf_set(sensor_value_gyro, simulation->sensordata[0]);
+        lf_set(simulator_ctrl, self->motor_output);
+    =}
+
+    @wcet("50 ms")
+    reaction (shutdown) {=
+        fclose(self->file);
+    =}
+}
+
+main reactor {
+    sim = new MujocoSimulator(file="models/reaction_wheel.xml");
+    ars = new AngularRateSensor()
+    gyro = new Gyroscope()
+    controller = new Controller()
+    motor = new Motor()
+    user_input = new UserInput();
+    file = new SimulatorInterface();
+
+    // interfacing with controller
+    sim.call_controller -> file.simulator_output
+    file.simulator_ctrl -> sim.return_controller
+
+    // user input controller
+    user_input.desired_angle -> controller.desired_angle;
+
+    // feeding sensor values
+    file.sensor_value_ars ->  ars.sim;
+    file.sensor_value_gyro -> gyro.sim; 
+
+    // sensor values to controller
+    gyro.out -> controller.current_angle
+    ars.out -> controller.current_speed
+
+    // forwarding controll output from the controller to the mujoco inteface
+    controller.controll_signal -> file.controller_output
+}
+

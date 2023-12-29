@@ -1,0 +1,35 @@
+\documentclass[border=5pt]{standalone}
+\usepackage{pgfplots}
+\usepackage{filecontents}
+\pgfplotsset{compat=1.14}
+
+\begin{document}
+ 	\pgfplotstableread[col sep=comma,]{data.csv}\datatable
+    \begin{tikzpicture}[
+        %Environment Cfg.
+        font=\bfseries\sffamily,
+    ]
+    \begin{axis}[
+     axis y line*=left,
+  	 ymin=0, ymax=2,
+     xlabel={Time $t$ in ms},
+     ylabel={Angle $\varphi$ in Radian},
+    ]
+    \addplot [red!90] table [x={time}, y={platform_angle}]{\datatable};\label{plot_one}
+
+
+    \end{axis}
+    
+    \begin{axis}[
+  	axis y line*=right,
+  	axis x line=none,
+  	ymin=0, ymax=210,
+  	ylabel={ Angular Velocity $\omega$ in Hz}
+]
+	 \addplot [blue!90] table [x={time}, y={joint_velocity}]{\datatable};z \label{plot_two}
+	 \addlegendimage{/pgfplots/refstyle=plot_one} \addlegendentry{angular velocity}
+	 \addlegendimage{/pgfplots/refstyle=plot_one} \addlegendentry{angle}
+    \end{axis}
+
+    \end{tikzpicture}
+\end{document} 

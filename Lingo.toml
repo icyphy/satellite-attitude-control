@@ -1,0 +1,14 @@
+[package]
+name = "satellite-altitude-control"
+version = "0.1.0"
+
+[properties]
+
+[[app]]
+target = "C"
+platform = "Native"
+main_reactor = "src/ReactionWheel.lf"
+
+[app.dependencies]
+
+[app.properties]

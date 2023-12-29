@@ -1,0 +1,168 @@
+target C {
+    scheduler: STATIC,
+    workers: 1,
+    timeout: 810 weeks, // 15 years of lifetime
+    /*
+    The following is required to start a GLFW window on macOS,
+    since a window can only be spawned from the main thread.
+    https://www.glfw.org/docs/3.3/intro_guide.html#thread_safety
+    */
+    // single-threaded: true,
+}
+
+
+preamble {=
+
+#ifndef HEADER_GUARD
+#define HEADER_GUARD
+
+#include <mujoco/mujoco.h>
+#include <GLFW/glfw3.h>
+
+#endif //HEADER_GUARD
+=}
+
+reactor MujocoSimulator(
+    file: char* = "./example/example.xml", 
+    time_resolution: time = 10 msec, 
+    visualize: bool = true,
+    fps_period: time = 20 msec
+    ) {
+    timer simulation_step_timer(0, 10ms);
+    timer draw_frame_timer(10ms, 40ms);
+
+    state error: char[1000];
+    state model: mjModel*;
+    state data: mjData*;
+
+    state camera: mjvCamera;    // abstract camera
+    state options: mjvOption;   // visualization options
+    state scene: mjvScene;      // abstract scene
+    state context: mjrContext;  // custom GPU context
+    state window: GLFWwindow*;
+    state button_left: bool;
+    state button_middle: bool;
+    state button_right: bool;
+    state lastx: double = 0;
+    state lasty: double = 0;
+    
+    output call_controller: mjData*;
+    input return_controller: float;
+
+    preamble {=
+        void error_callback(int error, const char* description) {
+            fprintf(stderr, "Error: %s\n", description);
+        }
+    =}
+
+    @wcet("100 ms")
+    reaction(startup) {=
+        fprintf(stdout, "start of simulation\n");
+        // load model from file and check for errors
+        self->model = mj_loadXML(self->file, NULL, self->error, 1000);
+        if (self->model == NULL) {
+            printf("MODEL is NULL exiting");
+            exit(1);
+        } else {
+            // make data corresponding to model
+            self->data = mj_makeData(self->model);
+
+            if (self->visualize) {
+                // Set an error callback before calling glfwInit.
+                glfwSetErrorCallback(error_callback);
+
+                // init GLFW, create window, make OpenGL contexttext current, request v-sync
+                if (glfwInit() == GLFW_FALSE) {
+                    printf("GLFW failed to initialize.\n");
+                    exit(1);
+                }
+
+                // Set a forward compatibility flag. This may be required for
+                // some macOS platforms.
+                /*
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+                */
+
+                self->window = glfwCreateWindow(1200, 900, "MujocoSimulator", NULL, NULL);
+                if (!self->window) {
+                    fprintf(stderr, "Failed to create GLFW window\n");
+                    glfwTerminate();
+                    exit(EXIT_FAILURE);
+                }
+                glfwMakeContextCurrent(self->window);
+                glfwSwapInterval(1);
+
+                // initialize visualization data structures
+                mjv_defaultCamera(&self->camera);
+                mjv_defaultOption(&self->options);
+                mjr_defaultContext(&self->context);
+
+                // create scene and contexttext
+                mjv_makeScene(self->model, &self->scene, 2000);
+                mjr_makeContext(self->model, &self->context, mjFONTSCALE_150);
+
+                // get framebuffer viewport
+                mjrRect viewport = {0, 0, 0, 0};
+                glfwGetFramebufferSize(self->window, &viewport.width, &viewport.height);
+
+                //setBackgroundRgb(model, 255, 255, 1);
+
+                // update scene and render
+                mjv_updateScene(self->model, self->data, &self->options, NULL, &self->camera, mjCAT_ALL, &self->scene);
+                mjr_render(viewport, &self->scene, &self->context);
+
+                // swap OpenGL buffers (blocking call due to v-sync)
+                glfwSwapBuffers(self->window);
+            }
+        }
+        printf("Start Up of MujocoSimulator is done!!\n");
+    =}
+
+    @wcet("100 ms")
+    reaction(simulation_step_timer) -> call_controller {=
+        mj_step(self->model, self->data);
+        mjData* new_data = mj_makeData(self->model);
+        mj_copyData(new_data, self->model, self->data);
+        lf_set(call_controller, new_data);
+    =}
+
+    @wcet("10 ms")
+    reaction(return_controller) {=
+        self->data->ctrl[0] = return_controller->value;
+    =}
+
+    @wcet("100 ms")
+    reaction(draw_frame_timer) {=
+        printf("Render Frame\n");
+        if(self->visualize) {
+            // get framebuffer viewport
+            mjrRect viewport = {0, 0, 0, 0};
+            glfwGetFramebufferSize(self->window, &viewport.width, &viewport.height);
+
+            // update scene and render
+            mjv_updateScene(self->model, self->data, &self->options, NULL, &self->camera, mjCAT_ALL, &self->scene);
+            mjr_render(viewport, &self->scene, &self->context);
+
+            // swap OpenGL buffers (blocking call due to v-sync)
+            glfwSwapBuffers(self->window);
+            // process pending GUI events, call GLFW callbacks
+        }
+    =}
+
+    @wcet("100 ms")
+    reaction(shutdown) {=
+        // free model and data
+        mj_deleteData(self->data);
+        mj_deleteModel(self->model);
+
+        if (self->visualize) {
+            // close GLFW, free visualization storage
+            glfwTerminate();
+            mjv_freeScene(&self->scene);
+            mjr_freeContext(&self->context);
+        }
+    =}
+}

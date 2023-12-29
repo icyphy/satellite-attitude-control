@@ -1,0 +1,39 @@
+<mujoco model="reaction wheel">
+  <compiler angle="radian"/> 
+	<option timestep="0.001" iterations="20" gravity="0 0 0">
+		<flag sensornoise="enable"/>
+	</option>
+	
+  <default>
+		<geom rgba="0.45 0.6 0.6 1"/>
+	</default>
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="32" height="512"/>
+  </asset>
+
+	<worldbody>
+		<light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5 "/>
+
+		<body name="platform" pos="0 0 0">
+      <site name="site-platform" pos="0 0 0"/>
+      <joint name="platform-joint" type="hinge" axis="0 1 0"/>
+
+      <geom name="rod" type="cylinder" pos="0 0 0" size=".4 .05" density="10" euler="1.57 0 0"/>
+
+      <body name="wheel" pos="0 -0.15 0">
+        <joint name="axis" type="hinge" axis="0 1 0"/>
+        <geom name="wheel" type="cylinder" pos="0 0 0" size=".1 .05" density="100" euler="1.57 0 0" rgba="0.9 0 0 1"/>
+      </body>
+    </body>
+  </worldbody>
+
+	<actuator>
+		<velocity joint='axis' name='motor'/>
+	</actuator>
+
+	<sensor>
+    <jointpos name="wheel_sensor" joint="axis" noise="0.001"/>
+    <jointvel name="velocity_wheel" joint="axis" noise="0.001"/>
+	</sensor>
+</mujoco>
+
