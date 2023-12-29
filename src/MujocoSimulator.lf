@@ -1,7 +1,13 @@
 target C {
     scheduler: STATIC,
     workers: 1,
-    timeout: 810 weeks // 15 years of lifetime
+    timeout: 810 weeks, // 15 years of lifetime
+    /*
+    The following is required to start a GLFW window on macOS,
+    since a window can only be spawned from the main thread.
+    https://www.glfw.org/docs/3.3/intro_guide.html#thread_safety
+    */
+    // single-threaded: true,
 }
 
 
@@ -43,6 +49,12 @@ reactor MujocoSimulator(
     output call_controller: mjData*;
     input return_controller: float;
 
+    preamble {=
+        void error_callback(int error, const char* description) {
+            fprintf(stderr, "Error: %s\n", description);
+        }
+    =}
+
     @wcet("100 ms")
     reaction(startup) {=
         fprintf(stdout, "start of simulation\n");
@@ -56,9 +68,30 @@ reactor MujocoSimulator(
             self->data = mj_makeData(self->model);
 
             if (self->visualize) {
+                // Set an error callback before calling glfwInit.
+                glfwSetErrorCallback(error_callback);
+
                 // init GLFW, create window, make OpenGL contexttext current, request v-sync
-                glfwInit();
+                if (glfwInit() == GLFW_FALSE) {
+                    printf("GLFW failed to initialize.\n");
+                    exit(1);
+                }
+
+                // Set a forward compatibility flag. This may be required for
+                // some macOS platforms.
+                /*
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+                */
+
                 self->window = glfwCreateWindow(1200, 900, "MujocoSimulator", NULL, NULL);
+                if (!self->window) {
+                    fprintf(stderr, "Failed to create GLFW window\n");
+                    glfwTerminate();
+                    exit(EXIT_FAILURE);
+                }
                 glfwMakeContextCurrent(self->window);
                 glfwSwapInterval(1);
 

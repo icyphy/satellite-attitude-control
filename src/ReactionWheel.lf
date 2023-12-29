@@ -8,7 +8,13 @@ target C {
     cmake-include: ["./mujoco.cmake"],
     scheduler: STATIC,
     workers: 1,
-    timeout: 810 weeks // 15 years of lifetime
+    timeout: 810 weeks, // 15 years of lifetime
+    /*
+    The following is required to start a GLFW window on macOS,
+    since a window can only be spawned from the main thread.
+    https://www.glfw.org/docs/3.3/intro_guide.html#thread_safety
+    */
+    // single-threaded: true,
 }
 
 import MujocoSimulator from "./MujocoSimulator.lf";
