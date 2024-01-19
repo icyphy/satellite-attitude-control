@@ -1,4 +1,4 @@
-# Satellite Altitude Control (Reaction Wheel) using Lingua Franca
+# Satellite Attitude Control (Reaction Wheel) using Lingua Franca
 
 **Contact:** <tassilo.tanneberger@tu-dresden.de> <shaokai@berkeley.edu>
 
