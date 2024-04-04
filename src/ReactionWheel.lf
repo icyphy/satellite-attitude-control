@@ -4,17 +4,19 @@
  */
 
 
-target C {
+ target C {
     cmake-include: ["./mujoco.cmake"],
-    scheduler: STATIC,
-    workers: 1,
-    timeout: 810 weeks, // 15 years of lifetime
+    // scheduler: STATIC,
+    // workers: 1,
+    // timeout: 810 weeks, // 15 years of lifetime
+    timeout: 1200 msec,
     /*
     The following is required to start a GLFW window on macOS,
     since a window can only be spawned from the main thread.
     https://www.glfw.org/docs/3.3/intro_guide.html#thread_safety
     */
-    // single-threaded: true,
+    single-threaded: true,
+    build-type: Debug,
 }
 
 import MujocoSimulator from "./MujocoSimulator.lf";
@@ -22,7 +24,6 @@ import MujocoSimulator from "./MujocoSimulator.lf";
 preamble {=
 #include <mujoco/mujoco.h>
 #include <GLFW/glfw3.h>
-
 =}
 
 /**
@@ -31,19 +32,24 @@ preamble {=
  */
 reactor Gyroscope(period=10ms) {
     timer t(10ms, period)
-    state value: float
+    state value: float[3] = {0}
 
-    input sim: float;
-    output out: float
+    input sim: float[3]
+    output out: float[3]
 
     @wcet("100 usec")
     reaction(t) -> out {=
-        lf_set(out, self->value);
+        out->value[0] = self->value[0];
+        out->value[1] = self->value[1];
+        out->value[2] = self->value[2];
+        lf_set_present(out);
     =}
 
     @wcet("100 usec")
     reaction (sim) {=
-        self->value = sim->value;
+        self->value[0] = sim->value[0];
+        self->value[1] = sim->value[1];
+        self->value[2] = sim->value[2];
     =}
 }
 
@@ -54,9 +60,9 @@ reactor Gyroscope(period=10ms) {
  */
 reactor AngularRateSensor(period=10ms) {
     timer t(10ms, period)
-    state value: float;
+    state value: float
 
-    input sim: float;
+    input sim: float
     output out: float
 
     @wcet("100 usec")
@@ -70,19 +76,23 @@ reactor AngularRateSensor(period=10ms) {
     =}
 }
 reactor Controller(period=100ms) {
-    input current_angle: float;
-    input current_speed: float;
-    input desired_angle: float;
+    input current_angle: float[3]
+    input current_speed: float
+    input desired_angle: float[3]
 
-    state current_angle: float;
-    state current_speed: float;
-    state desired_angle: float;
-    state last_update: {=unsigned long=};
-    state last_error: float;
-    state error_accumulator: float;
+    state current_angle: float[3] = {0}
+    state current_speed: float
+    state desired_angle: float[3] = {0}
+    state last_update: {=unsigned long=}
+    state last_error: float[3] = {0}
+    state error_accumulator: float
 
-    output controll_signal: float;
-    logical action sendCommand;
+    output controll_signal: float[3]
+    logical action sendCommand(5 msec)
+
+    preamble {=
+    #include <string.h>
+    =}
 
     @wcet("100 usec")
     reaction(desired_angle) {=
@@ -97,8 +107,10 @@ reactor Controller(period=100ms) {
 
     @wcet("100 usec")
     reaction(current_angle) -> sendCommand {=
-        self->current_angle = current_angle->value;
-        lf_schedule(sendCommand, MSEC(5));
+        self->current_angle[0] = current_angle->value[0];
+        self->current_angle[1] = current_angle->value[1];
+        self->current_angle[2] = current_angle->value[2];
+        lf_schedule(sendCommand, 0);
     =}
 
     @wcet("20 ms")
@@ -116,21 +128,36 @@ reactor Controller(period=100ms) {
 
         unsigned long time_diff = (current_tag - self->last_update);
         printf("T = %lu OT = %lu DT = %lu\n", current_tag, self->last_update, time_diff);
-        double velocity_vector = (self->current_angle - self->desired_angle)/( ((float)time_diff) * 0.000001 );
-        double error = (self->current_angle - self->desired_angle);
+        double velocity_vector[3]; 
+        velocity_vector[0] = (self->current_angle[0] - self->desired_angle[0])/( ((float)time_diff) * 0.000001 );
+        velocity_vector[1] = (self->current_angle[1] - self->desired_angle[1])/( ((float)time_diff) * 0.000001 );
+        velocity_vector[2] = (self->current_angle[2] - self->desired_angle[2])/( ((float)time_diff) * 0.000001 );
+        double error[3];
+        error[0] = (self->current_angle[0] - self->desired_angle[0]);
+        error[1] = (self->current_angle[1] - self->desired_angle[1]);
+        error[2] = (self->current_angle[2] - self->desired_angle[2]);
 
-        float controll_vector =
-              p_controller_value * velocity_vector  // present component
+        controll_signal->value[0] =
+              p_controller_value * velocity_vector[0]  // present component
             + i_controller_value * self->error_accumulator // integral component
-            + d_controller_value * (self->last_error - error); // differential component
+            + d_controller_value * (self->last_error[0] - error[0]); // differential component
+        // FIXME: Fill in the other two control signals.
+        controll_signal->value[1] = 
+              p_controller_value * velocity_vector[1]  // present component
+            + i_controller_value * self->error_accumulator // integral component
+            + d_controller_value * (self->last_error[1] - error[1]); // differential component
+        controll_signal->value[2] = 
+              p_controller_value * velocity_vector[2]  // present component
+            + i_controller_value * self->error_accumulator // integral component
+            + d_controller_value * (self->last_error[2] - error[2]); // differential component
 
-        self->last_error = error;
+        memcpy(self->last_error, error, sizeof(error));
         self->last_update = current_tag;
-        self->error_accumulator = self->error_accumulator * 0.25 + error;
+        self->error_accumulator = self->error_accumulator * 0.25 + error[0];
         
-        printf("ANGLE = %f DESIRED ANGLE = %f MOTOR = %f\n", self->current_angle, self->desired_angle, controll_vector);
+        printf("ANGLE = %f %f %f DESIRED ANGLE = %f %f %f MOTOR = %f %f %f\n", self->current_angle[0], self->current_angle[1], self->current_angle[2], self->desired_angle[0], self->desired_angle[1], self->desired_angle[2], controll_signal->value[0], controll_signal->value[1], controll_signal->value[2]);
 
-        lf_set(controll_signal, controll_vector);
+        lf_set_present(controll_signal);
     =} 
 
     @wcet("100 ms")
@@ -152,84 +179,142 @@ reactor Motor(freq: float=1000.0) {
 }
 
 reactor UserInput {
-    preamble {=
-        float ANGLE_1 = 1.0;
-        float ANGLE_2 = -2.0;
-    =}
+    // For some reason declaring the angles in the preamble segfaults.
+    // preamble {=
+    //     float ANGLE_1[3] = {1.0, 0.5, 0.2};
+    //     float ANGLE_2[3] = {-2.0, 0, 0};
+    // =}
 
-    logical action delay: float;
-    output desired_angle: float;
+    logical action delay: float[3];
+    output desired_angle: float[3];
+
+    state ANGLE_1 : float[3] = {1.0, 0.5, 0.2}
+    state ANGLE_2 : float[3] = {-2.0, 0, 0}
 
     @wcet("25 usec")
     reaction(startup) -> delay {=
-        lf_schedule_copy(delay, 0, &ANGLE_1, sizeof(float));
+        // FIXME: Is this correct?
+        lf_schedule_copy(delay, 0, &(self->ANGLE_1), 3);
+        lf_print("stack addr = %p", &(self->ANGLE_1));
     =}
     
     @wcet("25 usec")
     reaction (delay) -> desired_angle {=
-        lf_set(desired_angle, delay->value);
+        // FIXME: Is this correct?
+        desired_angle->value[0] = delay->value[0];
+        desired_angle->value[1] = delay->value[1];
+        desired_angle->value[2] = delay->value[2];
+        lf_set_present(desired_angle);
     =}
 }
 
 reactor SimulatorInterface {
     // interfacing with mujoco simulator
-    output simulator_ctrl: float;
+    output simulator_ctrl: float[3];
     input simulator_output: mjData*;
 
     // interfacing with sensors
-    output sensor_value_gyro: float;
+    output sensor_value_gyro: float[3];
     output sensor_value_ars: float;
 
+    // FIXME: Sharing a pointer this way seems to cause double free.
+    // How to prevent this from happening?
+    input model_pointer: mjModel*;
+
     // interfacing with controller
-    input controller_output: float;
+    input controller_output: float[3];
 
     state model: mjModel*;
-    state motor_output: float;
-    state file: FILE*;
+    state motor_output: float[3] = {0};
+    state file0: FILE*;
+    state file1: FILE*;
+    state file2: FILE*;
 
     @wcet("50 ms")
     reaction (startup) {=
-        FILE *fpt;
-        self->file = fopen("data.csv", "w+");
-
-        if (self->file == NULL) {
+        self->file0 = fopen("data0.csv", "w+");
+        self->file1 = fopen("data1.csv", "w+");
+        self->file2 = fopen("data2.csv", "w+");
+        if (self->file0 == NULL) {
             fprintf(stderr, "file cannot be opened");
             exit(1);
         }
-        fprintf(self->file,"time, platform_angle, joint_velocity\n");
+        if (self->file1 == NULL) {
+            fprintf(stderr, "file cannot be opened");
+            exit(1);
+        }
+        if (self->file2 == NULL) {
+            fprintf(stderr, "file cannot be opened");
+            exit(1);
+        }
+        fprintf(self->file0,"time, platform_angle, joint_velocity\n");
+        fprintf(self->file1,"time, platform_angle, joint_velocity\n");
+        fprintf(self->file2,"time, platform_angle, joint_velocity\n");
+    =}
+
+    /**
+     * Save the pointer to mjModel. This only happens at the first tag.
+     */
+    @wcet("50 usec")
+    reaction(model_pointer) {=
+        self->model = model_pointer->value;
+        lf_print("self->model = %p", self->model);
     =}
 
     @wcet("50 usec")
     reaction (controller_output) {=
-        self->motor_output = controller_output->value;
+        self->motor_output[0] = controller_output->value[0];
+        self->motor_output[1] = controller_output->value[1];
+        self->motor_output[2] = controller_output->value[2];
     =}
 
     @wcet("50 ms")
     reaction (simulator_output) -> sensor_value_ars, sensor_value_gyro, simulator_ctrl {=
         mjData* simulation = simulator_output->value;
 
-        fprintf(self->file, "%f, %f, %f\n", simulation->time * 1000.0, simulation->sensordata[0], simulation->sensordata[1]);
+        // Get sensor indices.
+        int wheel0_pos = mj_name2id(self->model, mjOBJ_SENSOR, "wheel0_pos");
+        int wheel0_vel = mj_name2id(self->model, mjOBJ_SENSOR, "wheel0_vel");
+        int wheel1_pos = mj_name2id(self->model, mjOBJ_SENSOR, "wheel1_pos");
+        int wheel1_vel = mj_name2id(self->model, mjOBJ_SENSOR, "wheel1_vel");
+        int wheel2_pos = mj_name2id(self->model, mjOBJ_SENSOR, "wheel2_pos");
+        int wheel2_vel = mj_name2id(self->model, mjOBJ_SENSOR, "wheel2_vel");
+        
+        // FIXME: Write to other files too.
+        fprintf(self->file0, "%f, %f, %f\n", simulation->time * 1000.0, simulation->sensordata[wheel0_pos], simulation->sensordata[wheel0_vel]);
+        fprintf(self->file1, "%f, %f, %f\n", simulation->time * 1000.0, simulation->sensordata[wheel1_pos], simulation->sensordata[wheel1_vel]);
+        fprintf(self->file2, "%f, %f, %f\n", simulation->time * 1000.0, simulation->sensordata[wheel2_pos], simulation->sensordata[wheel2_vel]);
 
-        lf_set(sensor_value_gyro, simulation->sensordata[0]);
-        lf_set(simulator_ctrl, self->motor_output);
+        sensor_value_gyro->value[0] = simulation->sensordata[wheel0_pos];
+        sensor_value_gyro->value[1] = simulation->sensordata[wheel1_pos];
+        sensor_value_gyro->value[2] = simulation->sensordata[wheel2_pos];
+        lf_set_present(sensor_value_gyro);
+        
+        simulator_ctrl->value[0] = self->motor_output[0];
+        simulator_ctrl->value[1] = self->motor_output[1];
+        simulator_ctrl->value[2] = self->motor_output[2];
+        lf_set_present(simulator_ctrl);
     =}
 
     @wcet("50 ms")
     reaction (shutdown) {=
-        fclose(self->file);
+        fclose(self->file0);
+        fclose(self->file1);
+        fclose(self->file2);
     =}
 }
 
 main reactor {
-    sim = new MujocoSimulator(file="models/reaction_wheel.xml");
+    sim = new MujocoSimulator(file="models/3_axis_reaction_wheel.xml");
     ars = new AngularRateSensor()
     gyro = new Gyroscope()
     controller = new Controller()
     motor = new Motor()
-    user_input = new UserInput();
-    file = new SimulatorInterface();
+    user_input = new UserInput()
+    file = new SimulatorInterface()
 
     // interfacing with controller
+    sim.model_pointer -> file.model_pointer
     sim.call_controller -> file.simulator_output
     file.simulator_ctrl -> sim.return_controller
 
