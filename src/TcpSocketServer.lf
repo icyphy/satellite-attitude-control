@@ -11,15 +11,32 @@ preamble {=
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <fcntl.h>
 
 #include "common.h"
 
-typedef MessageFromClient {
+typedef struct {
     int client;
     TcpMessage message;
-} struct;
+} MessageFromClient;
 
+inline bool has_little_endian() {
+    unsigned int x = 1;
+    char *c = (char*) &x;
+    if ((int)*c == 1) {
+        return true;
+    }
+    return false;
+};
+
+uint32_t convert_if_necessary(uint32_t value) {
+    if (has_little_endian()) {
+        return REVERSE_UINT32(value);
+    }
+    return value;
+};
 #endif //PREAMBLE_TCP_SOCKET_SERVER
+
 =}
 
 reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::1",  port: short = 50000) {
@@ -62,7 +79,7 @@ reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::
         }
 
         // start listening
-        if (listen(self->fd) < 0) {
+        if (listen(self->fd, 3) < 0) {
             lf_print("\nAccept Failed \n");
             exit(1);
         }
@@ -70,21 +87,23 @@ reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::
 
     reaction (to_satellite) {=
         TcpMessage message = to_satellite->value.message;
-        int socket = to_satellite->client;
+        int socket = to_satellite->value.client;
 
-        uint32_t size = convert_if_necessary(message->value.size);
-        uint32_t descriptor = convert_if_necessary(message->value.descriptor);
-        char* data = message->value.message;
+        uint32_t size = convert_if_necessary(message.size);
+        uint32_t descriptor = convert_if_necessary(message.descriptor);
+        char* data = message.message;
 
         write(socket, &size, sizeof(size));
         write(socket, &descriptor, sizeof(descriptor));
-        write(socket, data, message->value.size);
+        write(socket, data, message.size);
     =}
 
     reaction (t) {=
         int new_socket;
         struct sockaddr_in address;
-        if ((new_socket = accept(server_fd, (struct sockaddr*)&address, &addrlen)) > 0) {
+        socklen_t addrlen = sizeof(address);
+
+        if ((new_socket = accept(self->fd, (struct sockaddr*)&address, &addrlen)) > 0) {
             self->clients[self->number_of_client] = new_socket;
             self->number_of_client += 1;
         } else {
@@ -135,7 +154,7 @@ reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::
         client_message.message = message;
         client_message.client = client;
 
-        lf_set(from_ground, client_message); 
+        lf_set(from_satelitte, client_message); 
     =}
 
     reaction(shutdown) {=
