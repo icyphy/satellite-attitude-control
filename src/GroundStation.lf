@@ -1,0 +1,46 @@
+target C;
+
+import TcpSocketServer from "./TcpSocketServer.lf"
+
+preamble {=
+    struct Telemetry {
+        double angular_momentum,
+        double angle,
+        time_t time
+    }
+=}
+
+
+reactor SatelitteConnection {
+    socket = new TcpSocketServer();
+
+    output telemetry: Telemetry;
+
+
+    reaction (socket.from_satelitte) -> telemetry {=
+        TcpMessage value = socket.from_satelitte->value;
+
+
+        switch (value.descriptor) {
+            case 0:
+                assert(value.size >= sizeof(Telemetry));
+                Telemetry telemetry_struct{};
+                memcpy(&telemetry_struct, value.message, sizeof(Telemetry));
+
+                lf_set(telemetry, telemetry_struct);
+                break;
+            default:
+                lf_print("unknown descriptor received %d", value.descriptor);
+        } 
+    =}
+}
+
+
+main reactor {
+    satallite_conntection = new SatelitteConnection();
+
+    reaction(satallite_conntection.telemetry) {=
+        lf_print("telemetry received!");
+    =}
+
+}
