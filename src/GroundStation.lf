@@ -1,12 +1,11 @@
 target C {
-    files: [ "./common.h" ]
+    //files: [ "./common.c" ]
 }
 
 import TcpSocketServer from "./TcpSocketServer.lf"
 
 preamble {=
-
-    #include "./common.h"
+#include "./common.h"
 =}
 
 
@@ -39,7 +38,11 @@ main reactor {
     satallite_conntection = new SatelitteConnection();
 
     reaction(satallite_conntection.telemetry) {=
-        lf_print("telemetry received!");
+        double angle = satallite_conntection.telemetry->value.angle;
+        double angular_momentum = satallite_conntection.telemetry->value.angular_momentum;
+        unsigned long time = satallite_conntection.telemetry->value.time;
+        lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
+
     =}
 
 }

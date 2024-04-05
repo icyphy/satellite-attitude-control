@@ -7,23 +7,23 @@ import TcpSocketClient from "./TcpSocketClient.lf";
 main reactor {
     groundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
 
-    timer t(0, 1s);
+    timer t(2s, 1s);
 
     reaction (t) -> groundstation.to_ground {=
         Telemetry telemetry;
         
-        telemetry.angular_momentum = rand() * 100.0;
-        telemetry.angle = rand() * 10.0;
+        telemetry.angular_momentum = ((double)(rand() % 62831853071)) / 100000000.0;
+        telemetry.angle = ((double)(rand() % 62831853071)) / 1000000000.0;
         telemetry.time = time(NULL);
 
         TcpMessage message;
-        message.data = malloc(sizeof(Telemetry));
-        memcpy(message.data, &telemetry, sizeof(Telemetry));
+        message.message = malloc(sizeof(Telemetry));
+        memcpy(message.message, &telemetry, sizeof(Telemetry));
         message.size = sizeof(Telemetry);
         message.descriptor = 0;
-
-        lf_set(groundstation.to_ground, message);
         
+        lf_print("send telemetry");
+        lf_set(groundstation.to_ground, message);
     =}
 
 }

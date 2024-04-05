@@ -1,7 +1,10 @@
+#pragma once
 
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stdbool.h>
+#include <stdint.h>
 
 typedef struct {
     uint32_t size;
@@ -9,7 +12,7 @@ typedef struct {
     char* message;
 } TcpMessage;
 
-inline bool has_little_endian();
+bool has_little_endian();
 
 #define REVERSE_UINT32(n) ((uint32_t) ((((n) & 0xFF) << 24) | \
                                           (((n) & 0xFF00) << 8) | \
@@ -21,7 +24,13 @@ uint32_t convert_if_necessary(uint32_t value);
 typedef struct {
     double angular_momentum;
     double angle;
-    time_t time;
+    unsigned long time;
 } Telemetry;
+
+typedef struct {
+    int client;
+    TcpMessage message;
+} MessageFromClient;
+
 
 #endif //COMMON_H

@@ -1,4 +1,7 @@
-target C;
+target C {
+    files: [ "./common.h", "./common.c"],
+    cmake-include: ["GroundStation.cmake"]
+}
 
 preamble {=
 
@@ -15,36 +18,18 @@ preamble {=
 
 #include "common.h"
 
-typedef struct {
-    int client;
-    TcpMessage message;
-} MessageFromClient;
 
-inline bool has_little_endian() {
-    unsigned int x = 1;
-    char *c = (char*) &x;
-    if ((int)*c == 1) {
-        return true;
-    }
-    return false;
-};
-
-uint32_t convert_if_necessary(uint32_t value) {
-    if (has_little_endian()) {
-        return REVERSE_UINT32(value);
-    }
-    return value;
-};
 #endif //PREAMBLE_TCP_SOCKET_SERVER
-
 =}
 
-reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::1",  port: short = 50000) {
-    timer t(0, check_frequency)
+reactor TcpSocketServer(check_frequency: time = 100ms, host: {=const char*=} = "::1",  port: short = 50000) {
+    timer accept(0, check_frequency);
+    timer recv(100ms, check_frequency);
     state fd: int;
     state clients: int[];
     state number_of_client: size_t; 
     state current_client: int;
+    state set: fd_set;
 
     input to_satellite: {=MessageFromClient=};
     output from_satelitte: {=MessageFromClient=};
@@ -54,6 +39,7 @@ reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::
         self->clients = malloc(sizeof(int) * 100);
         self->number_of_client = 0;
         self->current_client = -1;
+        FD_ZERO(&self->set);
         
         if ((self->fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             lf_print("\n Socket creation error \n");
@@ -98,7 +84,7 @@ reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::
         write(socket, data, message.size);
     =}
 
-    reaction (t) {=
+    reaction (accept) {=
         int new_socket;
         struct sockaddr_in address;
         socklen_t addrlen = sizeof(address);
@@ -106,6 +92,8 @@ reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::
         if ((new_socket = accept(self->fd, (struct sockaddr*)&address, &addrlen)) > 0) {
             self->clients[self->number_of_client] = new_socket;
             self->number_of_client += 1;
+            FD_SET(new_socket, &self->set);
+            lf_print("accepted new connection id: %i sock: %i", self->number_of_client, new_socket);
         } else {
             lf_print("failed ot accept new connection");
             //exit(EXIT_FAILURE);
@@ -113,7 +101,7 @@ reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::
     =}
 
 
-    reaction (t) -> from_satelitte {=
+    reaction (recv) -> from_satelitte {=
         if (self->number_of_client == 0) {
             return;
         }
@@ -121,10 +109,27 @@ reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::
         self->current_client = (self->current_client + 1) % self->number_of_client;
         int client = self->clients[self->current_client];
 
+        //lf_print("checking socket %d for messages", self->current_client);
+
         const size_t BUFFER_SIZE = 4096;
         char* data = malloc(BUFFER_SIZE);
         uint32_t size, descriptor;
         int bytes_read;
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 1000;
+
+        //int rv = select(client, &self->set, NULL, NULL, &timeout);
+
+        /*if(rv == -1) {
+            lf_print("error occured!");
+            return;
+        }
+
+        if(rv == 0) {
+            lf_print("timeout occured!");
+            return;
+        }*/
 
         if (read(client, &size, sizeof(uint32_t)) > 4) {
             // problem less then 4 bytes read
@@ -141,6 +146,8 @@ reactor TcpSocketServer(check_frequency: time = 1ms, host: {=const char*=} = "::
         if (bytes_read = read(client, data, size) < 0) {
             // problem returned -1
         };
+
+        lf_print("message with size %i and descriptor %i", size, descriptor);
 
         assert(bytes_read != size); // missmatching amount of bytes read from what has been specified
 
