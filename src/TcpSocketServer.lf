@@ -1,0 +1,170 @@
+target C {
+    files: [ "./common.h", "./common.c"],
+    cmake-include: ["GroundStation.cmake"]
+}
+
+preamble {=
+
+#ifndef PREAMBLE_TCP_SOCKET_SERVER
+#define PREAMBLE_TCP_SOCKET_SERVER
+
+#include <assert.h>
+#include <stdbool.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+
+#include "common.h"
+
+
+#endif //PREAMBLE_TCP_SOCKET_SERVER
+=}
+
+reactor TcpSocketServer(check_frequency: time = 100ms, host: {=const char*=} = "::1",  port: short = 50000) {
+    timer accept(0, check_frequency);
+    timer recv(100ms, check_frequency);
+    state fd: int;
+    state clients: int[];
+    state number_of_client: size_t; 
+    state current_client: int;
+    state set: fd_set;
+
+    input to_satellite: {=MessageFromClient=};
+    output from_satelitte: {=MessageFromClient=};
+
+    reaction (startup) {=
+        struct sockaddr_in serv_addr;
+        self->clients = malloc(sizeof(int) * 100);
+        self->number_of_client = 0;
+        self->current_client = -1;
+        FD_ZERO(&self->set);
+        
+        if ((self->fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            lf_print("\n Socket creation error \n");
+            exit(1);
+        }
+
+        // configure the socket to be non-blocking
+        fcntl(self->fd, F_SETFL, fcntl(self->fd, F_GETFL) | O_NONBLOCK);
+     
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_port = htons(self->port);
+        
+        // turn human readable address into something the os can work with
+        if (inet_pton(AF_INET, self->host, &serv_addr.sin_addr) <= 0) {
+            lf_print("\nInvalid address/ Address not supported \n");
+            exit(1);
+        }
+        
+        // bind the socket to that address
+        if (bind(self->fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
+            lf_print("\nBind Failed \n");
+            exit(1);
+        }
+
+        // start listening
+        if (listen(self->fd, 3) < 0) {
+            lf_print("\nAccept Failed \n");
+            exit(1);
+        }
+    =}
+
+    reaction (to_satellite) {=
+        TcpMessage message = to_satellite->value.message;
+        int socket = to_satellite->value.client;
+
+        uint32_t size = convert_if_necessary(message.size);
+        uint32_t descriptor = convert_if_necessary(message.descriptor);
+        char* data = message.message;
+
+        write(socket, &size, sizeof(size));
+        write(socket, &descriptor, sizeof(descriptor));
+        write(socket, data, message.size);
+    =}
+
+    reaction (accept) {=
+        int new_socket;
+        struct sockaddr_in address;
+        socklen_t addrlen = sizeof(address);
+
+        if ((new_socket = accept(self->fd, (struct sockaddr*)&address, &addrlen)) > 0) {
+            self->clients[self->number_of_client] = new_socket;
+            self->number_of_client += 1;
+            FD_SET(new_socket, &self->set);
+            lf_print("accepted new connection id: %i sock: %i", self->number_of_client, new_socket);
+        } else {
+            lf_print("failed ot accept new connection");
+            //exit(EXIT_FAILURE);
+        }
+    =}
+
+
+    reaction (recv) -> from_satelitte {=
+        if (self->number_of_client == 0) {
+            return;
+        }
+
+        self->current_client = (self->current_client + 1) % self->number_of_client;
+        int client = self->clients[self->current_client];
+
+        //lf_print("checking socket %d for messages", self->current_client);
+
+        const size_t BUFFER_SIZE = 4096;
+        char* data = malloc(BUFFER_SIZE);
+        uint32_t size, descriptor;
+        int bytes_read;
+        struct timeval timeout;
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 1000;
+
+        //int rv = select(client, &self->set, NULL, NULL, &timeout);
+
+        /*if(rv == -1) {
+            lf_print("error occured!");
+            return;
+        }
+
+        if(rv == 0) {
+            lf_print("timeout occured!");
+            return;
+        }*/
+
+        if (read(client, &size, sizeof(uint32_t)) > 4) {
+            // problem less then 4 bytes read
+        };
+
+        size = convert_if_necessary(size);
+
+        if (read(client, &descriptor, sizeof(uint32_t)) > 4) {
+            // problem less then 4 bytes read
+        };
+
+        descriptor = convert_if_necessary(descriptor);
+
+        if (bytes_read = read(client, data, size) < 0) {
+            // problem returned -1
+        };
+
+        lf_print("message with size %i and descriptor %i", size, descriptor);
+
+        assert(bytes_read != size); // missmatching amount of bytes read from what has been specified
+
+        TcpMessage message;
+
+        message.size = size;
+        message.descriptor = descriptor;
+        message.message = data;
+
+        MessageFromClient client_message;
+        client_message.message = message;
+        client_message.client = client;
+
+        lf_set(from_satelitte, client_message); 
+    =}
+
+    reaction(shutdown) {=
+        close(self->fd);
+    =}
+}
