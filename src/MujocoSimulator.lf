@@ -1,5 +1,5 @@
 target C {
-    scheduler: STATIC,
+    // scheduler: STATIC,
     workers: 1,
     timeout: 810 weeks, // 15 years of lifetime
     /*
@@ -17,7 +17,7 @@ preamble {=
 #define HEADER_GUARD
 
 #include <mujoco/mujoco.h>
-#include <GLFW/glfw3.h>
+// #include <GLFW/glfw3.h>
 
 #endif //HEADER_GUARD
 =}
@@ -39,7 +39,7 @@ reactor MujocoSimulator(
     state options: mjvOption;   // visualization options
     state scene: mjvScene;      // abstract scene
     state context: mjrContext;  // custom GPU context
-    state window: GLFWwindow*;
+    // state window: GLFWwindow*;
     state button_left: bool;
     state button_middle: bool;
     state button_right: bool;
@@ -69,6 +69,7 @@ reactor MujocoSimulator(
             // make data corresponding to model
             self->data = mj_makeData(self->model);
 
+            /*
             if (self->visualize) {
                 // Set an error callback before calling glfwInit.
                 glfwSetErrorCallback(error_callback);
@@ -117,6 +118,7 @@ reactor MujocoSimulator(
                 // swap OpenGL buffers (blocking call due to v-sync)
                 glfwSwapBuffers(self->window);
             }
+            */
         }
         lf_set(model_pointer, self->model);
         lf_print("Sent model pointer %p", self->model);
@@ -141,6 +143,8 @@ reactor MujocoSimulator(
     @wcet("100 ms")
     reaction(draw_frame_timer) {=
         printf("Render Frame\n");
+
+        /*
         if(self->visualize) {
             // get framebuffer viewport
             mjrRect viewport = {0, 0, 0, 0};
@@ -154,6 +158,7 @@ reactor MujocoSimulator(
             glfwSwapBuffers(self->window);
             // process pending GUI events, call GLFW callbacks
         }
+        */
     =}
 
     @wcet("100 ms")
@@ -162,11 +167,13 @@ reactor MujocoSimulator(
         mj_deleteData(self->data);
         mj_deleteModel(self->model);
 
+        /*
         if (self->visualize) {
             // close GLFW, free visualization storage
             glfwTerminate();
             mjv_freeScene(&self->scene);
             mjr_freeContext(&self->context);
         }
+        */
     =}
 }

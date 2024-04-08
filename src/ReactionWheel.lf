@@ -5,17 +5,18 @@
 
 
  target C {
-    cmake-include: ["./mujoco.cmake"],
-    // scheduler: STATIC,
+    cmake-include: ["./mujoco-rpi.cmake"],
+    scheduler: STATIC,
     // workers: 1,
     // timeout: 810 weeks, // 15 years of lifetime
     timeout: 1200 msec,
     /*
-    The following is required to start a GLFW window on macOS,
+    single-threaded is required to start a GLFW window on macOS,
     since a window can only be spawned from the main thread.
     https://www.glfw.org/docs/3.3/intro_guide.html#thread_safety
     */
-    single-threaded: true,
+    // single-threaded: true,
+    files: ["../models/3_axis_reaction_wheel.xml"],
     build-type: Debug,
 }
 
@@ -23,7 +24,7 @@ import MujocoSimulator from "./MujocoSimulator.lf";
 
 preamble {=
 #include <mujoco/mujoco.h>
-#include <GLFW/glfw3.h>
+// #include <GLFW/glfw3.h>
 =}
 
 /**
@@ -79,6 +80,7 @@ reactor Controller(period=100ms) {
     input current_angle: float[3]
     input current_speed: float
     input desired_angle: float[3]
+    input sendCommand_in: bool
 
     state current_angle: float[3] = {0}
     state current_speed: float
@@ -88,7 +90,7 @@ reactor Controller(period=100ms) {
     state error_accumulator: float
 
     output controll_signal: float[3]
-    logical action sendCommand(5 msec)
+    output sendCommand_out: bool
 
     preamble {=
     #include <string.h>
@@ -106,15 +108,15 @@ reactor Controller(period=100ms) {
     =}   
 
     @wcet("100 usec")
-    reaction(current_angle) -> sendCommand {=
+    reaction(current_angle) -> sendCommand_out {=
         self->current_angle[0] = current_angle->value[0];
         self->current_angle[1] = current_angle->value[1];
         self->current_angle[2] = current_angle->value[2];
-        lf_schedule(sendCommand, 0);
+        lf_set_present(sendCommand_out);
     =}
 
     @wcet("20 ms")
-    reaction(sendCommand) -> controll_signal {=
+    reaction(sendCommand_in) -> controll_signal {=
         const double i_controller_value = -12;
         const double p_controller_value = -8;
         const double d_controller_value = -1;
@@ -168,15 +170,15 @@ reactor Controller(period=100ms) {
  * have a maximum driver pulse input frequency of 200 kHz (i.e., a period of 5 usec!).
  * https://www.amazon.com/gp/product/B08Q79YTQW/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1
  */
-reactor Motor(freq: float=1000.0) {
-    input in:float
-    output out: float;
+// reactor Motor(freq: float=1000.0) {
+//     input in:float
+//     output out: float;
     
-    @wcet("25 usec")
-    reaction(in) -> out {=
-        lf_set(out, in->value);
-    =}
-}
+//     @wcet("25 usec")
+//     reaction(in) -> out {=
+//         lf_set(out, in->value);
+//     =}
+// }
 
 reactor UserInput {
     // For some reason declaring the angles in the preamble segfaults.
@@ -185,25 +187,16 @@ reactor UserInput {
     //     float ANGLE_2[3] = {-2.0, 0, 0};
     // =}
 
-    logical action delay: float[3];
     output desired_angle: float[3];
 
     state ANGLE_1 : float[3] = {1.0, 0.5, 0.2}
     state ANGLE_2 : float[3] = {-2.0, 0, 0}
 
     @wcet("25 usec")
-    reaction(startup) -> delay {=
-        // FIXME: Is this correct?
-        lf_schedule_copy(delay, 0, &(self->ANGLE_1), 3);
-        lf_print("stack addr = %p", &(self->ANGLE_1));
-    =}
-    
-    @wcet("25 usec")
-    reaction (delay) -> desired_angle {=
-        // FIXME: Is this correct?
-        desired_angle->value[0] = delay->value[0];
-        desired_angle->value[1] = delay->value[1];
-        desired_angle->value[2] = delay->value[2];
+    reaction(startup) -> desired_angle {=
+        desired_angle->value[0] = self->ANGLE_1[0];
+        desired_angle->value[1] = self->ANGLE_1[1];
+        desired_angle->value[2] = self->ANGLE_1[2];
         lf_set_present(desired_angle);
     =}
 }
@@ -305,11 +298,10 @@ reactor SimulatorInterface {
 }
 
 main reactor {
-    sim = new MujocoSimulator(file="models/3_axis_reaction_wheel.xml");
+    sim = new MujocoSimulator(file="../3_axis_reaction_wheel.xml");
     ars = new AngularRateSensor()
     gyro = new Gyroscope()
     controller = new Controller()
-    motor = new Motor()
     user_input = new UserInput()
     file = new SimulatorInterface()
 
@@ -331,5 +323,6 @@ main reactor {
 
     // forwarding controll output from the controller to the mujoco inteface
     controller.controll_signal -> file.controller_output
+    controller.sendCommand_out -> controller.sendCommand_in
 }
 
