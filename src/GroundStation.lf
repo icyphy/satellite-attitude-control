@@ -3,6 +3,7 @@ target C {
 }
 
 import TcpSocketServer from "./TcpSocketServer.lf"
+import WebSocketServer from "./WebSocketServer.lf"
 
 preamble {=
 #include "./common.h"
@@ -30,6 +31,8 @@ reactor SatelitteConnection {
             default:
                 lf_print("unknown descriptor received %d", value.descriptor);
         }
+
+        free(value.message);
     =}
 }
 
@@ -37,12 +40,46 @@ reactor SatelitteConnection {
 main reactor {
     satallite_conntection = new SatelitteConnection();
 
-    reaction(satallite_conntection.telemetry) {=
+    s = new WebSocketServer(
+        hostport=8080,
+        max_clients=2,  // Limit number of clients to 2.
+        initial_file = {= LF_SOURCE_DIRECTORY LF_FILE_SEPARATOR "WebSocket.html" =})
+
+    reaction(startup) {=
+        lf_print("======== Starting server. Open WebSocket.html in your favorite browser.");
+    =}
+
+    reaction(satallite_conntection.telemetry) -> s.send {=
         double angle = satallite_conntection.telemetry->value.angle;
         double angular_momentum = satallite_conntection.telemetry->value.angular_momentum;
         unsigned long time = satallite_conntection.telemetry->value.time;
-        lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
+        //lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
+        web_socket_message_t* message = malloc(sizeof(web_socket_instance_t));
 
+        message->message = malloc(200);
+        message->wsi = NULL;
+        int size = sprintf(message->message, "{\"angule\": %lf, \"angular_momentum\": %lf, \"time\": %li}", angle, angular_momentum, time);
+        lf_print("json: %s", message->message);
+        message->length = size;
+        message->binary = false;
+        message->next = NULL;
+
+        lf_token_t* token = lf_new_token((lf_port_base_t*)s.send, (void*)message, 1);
+
+        lf_set_token(s.send, token);
     =}
+
+  reaction(s.connected) {=
+    if (s.connected->value.connected) {
+      lf_print("======== Connected a new client");
+    } else {
+      lf_print("======== Disconnected client");
+    }
+  =}
+
+  reaction(s.received) {=
+    // NOTE: The WebSocketServer ensures that the received message is null terminated.
+    lf_print("======== Application received: %s", (char*)s.received->value->message);
+  =}
 
 }
