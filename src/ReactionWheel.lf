@@ -203,7 +203,7 @@ reactor UserInput {
 reactor SimulatorInterface {
     // interfacing with mujoco simulator
     output simulator_ctrl: float[3];
-    input simulator_output: mjData*;
+    input simulator_output: mjData_ptr;
 
     // interfacing with sensors
     output sensor_value_gyro: float[3];
@@ -211,12 +211,12 @@ reactor SimulatorInterface {
 
     // FIXME: Sharing a pointer this way seems to cause double free.
     // How to prevent this from happening?
-    input model_pointer: mjModel*;
+    input model_pointer: mjModel_ptr;
 
     // interfacing with controller
     input controller_output: float[3];
 
-    state model: mjModel*;
+    state model: mjModel_ptr;
     state motor_output: float[3] = {0};
     state file0: FILE*;
     state file1: FILE*;
