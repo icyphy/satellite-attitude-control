@@ -12,14 +12,7 @@ target C {
 
 
 preamble {=
-
-#ifndef HEADER_GUARD
-#define HEADER_GUARD
-
-#include <mujoco/mujoco.h>
-// #include <GLFW/glfw3.h>
-
-#endif //HEADER_GUARD
+    #include "reaction_wheel.h"
 =}
 
 reactor MujocoSimulator(

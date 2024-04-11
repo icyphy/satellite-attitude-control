@@ -16,15 +16,14 @@
     https://www.glfw.org/docs/3.3/intro_guide.html#thread_safety
     */
     // single-threaded: true,
-    files: ["../models/3_axis_reaction_wheel.xml"],
+    files: ["../models/3_axis_reaction_wheel.xml", "reaction_wheel.h"],
     build-type: Debug,
 }
 
 import MujocoSimulator from "./MujocoSimulator.lf";
 
 preamble {=
-#include <mujoco/mujoco.h>
-// #include <GLFW/glfw3.h>
+    #include "reaction_wheel.h"
 =}
 
 /**
