@@ -5,11 +5,12 @@
 
 
  target C {
-    cmake-include: ["./mujoco-rpi.cmake"],
+    cmake-include: ["./mujoco.cmake"],
     scheduler: STATIC,
     // workers: 1,
     // timeout: 810 weeks, // 15 years of lifetime
-    timeout: 1200 msec,
+    // timeout: 1200 msec, // For testing
+    timeout: 100 msec,
     /*
     single-threaded is required to start a GLFW window on macOS,
     since a window can only be spawned from the main thread.
@@ -21,10 +22,12 @@
 }
 
 import MujocoSimulator from "./MujocoSimulator.lf";
+import TcpSocketClient from "./TcpSocketClient.lf"
 
 preamble {=
 #include <mujoco/mujoco.h>
 // #include <GLFW/glfw3.h>
+#include "common.h"   
 =}
 
 /**
@@ -91,6 +94,7 @@ reactor Controller(period=100ms) {
 
     output controll_signal: float[3]
     output sendCommand_out: bool
+    output update_status: {=TcpMessage=}
 
     preamble {=
     #include <string.h>
@@ -116,7 +120,24 @@ reactor Controller(period=100ms) {
     =}
 
     @wcet("20 ms")
-    reaction(sendCommand_in) -> controll_signal {=
+    reaction(sendCommand_in) -> update_status, controll_signal {=
+        // Send status to the data processing unit.
+        Telemetry telemetry;
+        
+        telemetry.angular_momentum = 0;
+        telemetry.angle = self->current_angle[0];
+        telemetry.time = lf_time_physical_elapsed();
+
+        TcpMessage message;
+        message.message = malloc(sizeof(Telemetry));
+        memcpy(message.message, &telemetry, sizeof(Telemetry));
+        message.size = sizeof(Telemetry);
+        message.descriptor = 0;
+        
+        lf_print("send telemetry");
+        lf_set(update_status, message);
+
+        // Send control signals.
         const double i_controller_value = -12;
         const double p_controller_value = -8;
         const double d_controller_value = -1;
@@ -304,6 +325,7 @@ main reactor {
     controller = new Controller()
     user_input = new UserInput()
     file = new SimulatorInterface()
+    tcpClient = new TcpSocketClient(host="127.0.0.1", port=31812);
 
     // interfacing with controller
     sim.model_pointer -> file.model_pointer
@@ -324,5 +346,6 @@ main reactor {
     // forwarding controll output from the controller to the mujoco inteface
     controller.controll_signal -> file.controller_output
     controller.sendCommand_out -> controller.sendCommand_in
+    controller.update_status -> tcpClient.to_ground
 }
 

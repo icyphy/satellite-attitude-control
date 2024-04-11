@@ -1,0 +1,54 @@
+/**
+ * This program runs on the ODROID-XU4.
+ */
+target C {
+    //files: [ "./common.c" ],
+    scheduler: STATIC,
+    build-type: Debug,
+}
+
+import TcpSocketServer from "./TcpSocketServer.lf"
+
+preamble {=
+#include "./common.h"
+=}
+
+reactor Process {
+  input from_reactionWheel: MessageFromClient;
+  input telemetry_in: Telemetry;
+  output telemetry_out: Telemetry;
+
+  reaction (from_reactionWheel) -> telemetry_out {=
+    MessageFromClient message = from_reactionWheel->value;
+    TcpMessage value = message.message;
+
+    switch (value.descriptor) {
+      case 0:
+        assert(value.size >= sizeof(Telemetry));
+        Telemetry telemetry_struct;
+        memcpy(&telemetry_struct, value.message, sizeof(Telemetry));
+
+        lf_set(telemetry_out, telemetry_struct);
+        break;
+      default:
+        lf_print("unknown descriptor received %d", value.descriptor);
+    }
+
+    free(value.message);
+  =}
+
+  reaction(telemetry_in) {=
+    double angle = telemetry_in->value.angle;
+    double angular_momentum = telemetry_in->value.angular_momentum;
+    unsigned long time = telemetry_in->value.time;
+    lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
+  =}
+}
+
+
+main reactor {
+  process = new Process()
+  socket = new TcpSocketServer(host="127.0.0.1", port=31812);
+  process.telemetry_out -> process.telemetry_in
+  socket.from_satelitte -> process.from_reactionWheel
+}
