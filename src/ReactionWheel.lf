@@ -297,7 +297,7 @@ reactor SimulatorInterface {
 }
 
 main reactor {
-    sim = new MujocoSimulator(file="../3_axis_reaction_wheel.xml");
+    sim = new MujocoSimulator(file="models/3_axis_reaction_wheel.xml");
     ars = new AngularRateSensor()
     gyro = new Gyroscope()
     controller = new Controller()
