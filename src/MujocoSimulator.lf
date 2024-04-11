@@ -24,7 +24,7 @@ reactor MujocoSimulator(
     timer simulation_step_timer(0, 10ms);
     timer draw_frame_timer(10ms, 40ms);
 
-    state error: char[1000];
+    state error: char*;
     state model: mjModel*;
     state data: mjData*;
 
@@ -39,24 +39,25 @@ reactor MujocoSimulator(
     state lastx: double = 0;
     state lasty: double = 0;
     
-    output model_pointer: mjModel*;
-    output call_controller: mjData*;
+    // Use typedef'ed pointers to avoid C-runtime mem management.
+    output model_pointer: mjModel_ptr;
+    output call_controller: mjData_ptr;
     input return_controller: float[3];
 
     preamble {=
         void error_callback(int error, const char* description) {
-            fprintf(stderr, "Error: %s\n", description);
+            lf_print_error("Error: %s\n", description);
         }
     =}
 
     @wcet("100 ms")
     reaction(startup) -> model_pointer {=
-        fprintf(stdout, "start of simulation\n");
+        self->error = (char *) malloc(1000 * sizeof(char));
+        lf_print("start of simulation. Opening model at %s\n", self->file);
         // load model from file and check for errors
         self->model = mj_loadXML(self->file, NULL, self->error, 1000);
         if (self->model == NULL) {
-            printf("MODEL is NULL exiting");
-            exit(1);
+            lf_print_error_and_exit("Failed to load Mujoco model with error `%s`", self->error);
         }
         else {
             // make data corresponding to model
@@ -115,7 +116,7 @@ reactor MujocoSimulator(
         }
         lf_set(model_pointer, self->model);
         lf_print("Sent model pointer %p", self->model);
-        printf("Start Up of MujocoSimulator is done!!\n");
+        lf_print("Start Up of MujocoSimulator is done!!");
     =}
 
     @wcet("100 ms")
@@ -135,7 +136,7 @@ reactor MujocoSimulator(
 
     @wcet("100 ms")
     reaction(draw_frame_timer) {=
-        printf("Render Frame\n");
+        lf_print("Render Frame");
 
         /*
         if(self->visualize) {
