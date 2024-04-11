@@ -5,7 +5,8 @@
 
 
  target C {
-    cmake-include: ["./mujoco.cmake"],
+    // cmake-include: ["./mujoco.cmake"], // For desktop
+    cmake-include: ["./mujoco-rpi.cmake"], // For RPi4
     scheduler: STATIC,
     // workers: 1,
     // timeout: 810 weeks, // 15 years of lifetime
@@ -325,7 +326,7 @@ main reactor {
     controller = new Controller()
     user_input = new UserInput()
     file = new SimulatorInterface()
-    tcpClient = new TcpSocketClient(host="127.0.0.1", port=31812);
+    tcpClient = new TcpSocketClient(host="192.168.123.111", port=31812);
 
     // interfacing with controller
     sim.model_pointer -> file.model_pointer

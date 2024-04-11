@@ -48,7 +48,8 @@ reactor Process {
 
 main reactor {
   process = new Process()
-  socket = new TcpSocketServer(host="127.0.0.1", port=31812);
+  // socket = new TcpSocketServer(host="127.0.0.1", port=31812);
+  socket = new TcpSocketServer(host="192.168.123.111", port=31812);
   process.telemetry_out -> process.telemetry_in
   socket.from_satelitte -> process.from_reactionWheel
 }

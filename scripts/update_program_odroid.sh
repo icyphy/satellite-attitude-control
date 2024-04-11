@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# ip=192.168.3.4      # Under macOS's internet sharing
-ip=192.168.123.106  # Under DHCP from CuteRouter
-username=agent-k
-program=ReactionWheel
+# ip=192.168.3.2      # Under macOS's internet sharing
+ip=192.168.123.111  # Under DHCP from CuteRouter
+username=nkagamihara
+program=DataProcessing
 
 # Change the working directory to the directory of the script.
 cd "$(dirname "$0")"
