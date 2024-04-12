@@ -22,8 +22,9 @@ bool has_little_endian();
 uint32_t convert_if_necessary(uint32_t value);
 
 typedef struct {
-    double angular_momentum;
-    double angle;
+    double yaw;
+    double pitch;
+    double roll;
     unsigned long time;
 } Telemetry;
 

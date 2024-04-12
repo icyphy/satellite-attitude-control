@@ -142,6 +142,10 @@ reactor TcpSocketServer(check_frequency: time = 100ms, host: {=const char*=} = "
         };
 
         descriptor = convert_if_necessary(descriptor);
+        if (size >= BUFFER_SIZE) {
+            lf_print("overflow!!!!!");
+            size = BUFFER_SIZE;
+        }
 
         if (bytes_read = read(client, data, size) < 0) {
             // problem returned -1
