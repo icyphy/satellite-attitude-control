@@ -12,8 +12,9 @@ main reactor {
     reaction (t) -> groundstation.to_ground {=
         Telemetry telemetry;
         
-        telemetry.angular_momentum = ((double)(rand() % 62831853071)) / 100000000.0;
-        telemetry.angle = ((double)(rand() % 62831853071)) / 1000000000.0;
+        telemetry.yaw = ((double)(rand() % 62831853071)) / 1000000000.0;
+        telemetry.pitch = ((double)(rand() % 62831853071)) / 1000000000.0;
+        telemetry.roll = ((double)(rand() % 62831853071)) / 1000000000.0;
         telemetry.time = time(NULL);
 
         TcpMessage message;

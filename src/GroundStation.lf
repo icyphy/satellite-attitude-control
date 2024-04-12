@@ -49,24 +49,63 @@ main reactor {
         lf_print("======== Starting server. Open WebSocket.html in your favorite browser.");
     =}
 
-    reaction(satallite_conntection.telemetry) -> s.send {=
-        double angle = satallite_conntection.telemetry->value.angle;
-        double angular_momentum = satallite_conntection.telemetry->value.angular_momentum;
-        unsigned long time = satallite_conntection.telemetry->value.time;
+    /*timer t(0s, 1s);
+    reaction(t) -> s.send {=
+        double yaw = random() / 10000000.0;
+        double pitch = random() / 10000000.0;
+        double roll = random() / 10000000.0;
+        unsigned long ctime = time(NULL);
+
         //lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
-        web_socket_message_t* message = malloc(sizeof(web_socket_instance_t));
+        /*web_socket_message_t* message = malloc(sizeof(web_socket_instance_t));
 
         message->message = malloc(200);
         message->wsi = NULL;
-        int size = sprintf(message->message, "{\"angule\": %lf, \"angular_momentum\": %lf, \"time\": %li}", angle, angular_momentum, time);
+        int size = sprintf(message->message, "{\"yaw\": %lf, \"pitch\": %lf, \"roll\": %li}", yaw, pitch, roll);
         lf_print("json: %s", message->message);
         message->length = size;
         message->binary = false;
-        message->next = NULL;
+        message->next = NULL; */
 
-        lf_token_t* token = lf_new_token((lf_port_base_t*)s.send, (void*)message, 1);
+        //lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
+      /*  web_socket_message_t message; // = malloc(sizeof(web_socket_instance_t));
 
-        lf_set_token(s.send, token);
+        message.message = malloc(200);
+        message.wsi = NULL;
+        int size = sprintf(message.message, "{\"yaw\": %lf, \"pitch\": %lf, \"roll\": %li}", yaw, pitch, roll, time);
+        lf_print("json: %s", message.message);
+        message.length = size;
+        message.binary = false;
+        message.next = NULL;
+
+        lf_set(s.send, message);
+ 
+        
+        //lf_token_t* token = lf_new_token((lf_port_base_t*)s.send, (void*)message, 1);
+        //lf_set_token(s.send, token);
+        lf_set(s.send, message);   
+    =}*/
+
+    reaction(satallite_conntection.telemetry) -> s.send {=
+        double yaw = satallite_conntection.telemetry->value.yaw;
+        double pitch = satallite_conntection.telemetry->value.pitch;
+        double roll = satallite_conntection.telemetry->value.roll;
+        unsigned long time = satallite_conntection.telemetry->value.time;
+
+        //lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
+        web_socket_message_t message; // = malloc(sizeof(web_socket_instance_t));
+
+        message.message = malloc(200);
+        message.wsi = NULL;
+        int size = sprintf(message.message, "{\"yaw\": %lf, \"pitch\": %lf, \"roll\": %li}", yaw, pitch, roll, time);
+        lf_print("json: %s", message.message);
+        message.length = size;
+        message.binary = false;
+        message.next = NULL;
+
+        lf_set(s.send, message);
+        //lf_token_t* token = lf_new_token((lf_port_base_t*)s.send, (void*)message, 1);
+        //lf_set_token(s.send, token);
     =}
 
   reaction(s.connected) {=
