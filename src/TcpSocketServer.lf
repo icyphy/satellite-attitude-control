@@ -23,16 +23,16 @@ preamble {=
 =}
 
 reactor TcpSocketServer(check_frequency: time = 100ms, host: {=const char*=} = "::1",  port: short = 50000) {
-    timer accept(0, check_frequency);
-    timer recv(100ms, check_frequency);
-    state fd: int;
-    state clients: int[];
-    state number_of_client: size_t; 
-    state current_client: int;
-    state set: fd_set;
+    timer accept(0, check_frequency)
+    timer recv(100ms, check_frequency)
+    state fd: int
+    state clients: int[]
+    state number_of_client: size_t
+    state current_client: int
+    state set: fd_set
 
-    input to_satellite: {=MessageFromClient=};
-    output from_satelitte: {=MessageFromClient=};
+    input to_satellite:MessageFromClient
+    output from_satelitte: MessageFromClient
 
     reaction (startup) {=
         struct sockaddr_in serv_addr;
@@ -95,8 +95,8 @@ reactor TcpSocketServer(check_frequency: time = 100ms, host: {=const char*=} = "
             FD_SET(new_socket, &self->set);
             lf_print("accepted new connection id: %i sock: %i", self->number_of_client, new_socket);
         } else {
-            lf_print("failed ot accept new connection");
-            //exit(EXIT_FAILURE);
+            // lf_print("failed to accept new connection");
+            // exit(EXIT_FAILURE);
         }
     =}
 
@@ -112,7 +112,7 @@ reactor TcpSocketServer(check_frequency: time = 100ms, host: {=const char*=} = "
         //lf_print("checking socket %d for messages", self->current_client);
 
         const size_t BUFFER_SIZE = 4096;
-        char* data = malloc(BUFFER_SIZE);
+        char* data = malloc(BUFFER_SIZE); // FIXME: Where is it freed?
         uint32_t size, descriptor;
         int bytes_read;
         struct timeval timeout;
@@ -131,14 +131,16 @@ reactor TcpSocketServer(check_frequency: time = 100ms, host: {=const char*=} = "
             return;
         }*/
 
-        if (read(client, &size, sizeof(uint32_t)) > 4) {
+        if (bytes_read = read(client, &size, sizeof(uint32_t)) < 4) {
             // problem less then 4 bytes read
+            lf_print("Received less than 4 bytes on size: %d", bytes_read);
         };
 
         size = convert_if_necessary(size);
 
-        if (read(client, &descriptor, sizeof(uint32_t)) > 4) {
+        if (bytes_read = read(client, &descriptor, sizeof(uint32_t)) < 4) {
             // problem less then 4 bytes read
+            lf_print("Received less than 4 bytes on descriptor: %d", bytes_read);
         };
 
         descriptor = convert_if_necessary(descriptor);
@@ -153,7 +155,9 @@ reactor TcpSocketServer(check_frequency: time = 100ms, host: {=const char*=} = "
 
         lf_print("message with size %i and descriptor %i", size, descriptor);
 
-        assert(bytes_read != size); // missmatching amount of bytes read from what has been specified
+        lf_print("bytes_read: %lld", bytes_read);
+        lf_print("size: %lld", size);
+        // assert(bytes_read <= size); // The amount of bytes read should match what has been specified.
 
         TcpMessage message;
 
