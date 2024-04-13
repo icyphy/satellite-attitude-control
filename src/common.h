@@ -21,10 +21,15 @@ bool has_little_endian();
 
 uint32_t convert_if_necessary(uint32_t value);
 
+uint32_t convert_to_host(uint32_t value);
+
 typedef struct {
     double yaw;
     double pitch;
     double roll;
+    double vel_yaw;
+    double vel_pitch;
+    double vel_roll;
     unsigned long time;
 } Telemetry;
 

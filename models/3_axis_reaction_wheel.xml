@@ -1,7 +1,7 @@
 <mujoco model="3-axis reaction wheel satellite">
   <compiler angle="radian"/> 
   <option timestep="0.001" iterations="20" gravity="0 0 0">
-    <flag sensornoise="enable"/>
+    <!-- <flag sensornoise="enable"/> -->
   </option>
 
   <default>

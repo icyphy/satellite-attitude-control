@@ -90,14 +90,19 @@ main reactor {
         double yaw = satallite_conntection.telemetry->value.yaw;
         double pitch = satallite_conntection.telemetry->value.pitch;
         double roll = satallite_conntection.telemetry->value.roll;
+        double vel_yaw = satallite_conntection.telemetry->value.vel_yaw;
+        double vel_pitch = satallite_conntection.telemetry->value.vel_pitch;
+        double vel_roll = satallite_conntection.telemetry->value.vel_roll;
+
         unsigned long time = satallite_conntection.telemetry->value.time;
 
         //lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
         web_socket_message_t message; // = malloc(sizeof(web_socket_instance_t));
 
-        message.message = malloc(200);
+        message.message = malloc(300);
         message.wsi = NULL;
-        int size = sprintf(message.message, "{\"yaw\": %lf, \"pitch\": %lf, \"roll\": %li}", yaw, pitch, roll, time);
+        int size = sprintf(message.message, "{\"yaw\": %lf, \"pitch\": %lf, \"roll\": %li, \"vel_yaw\": %lf, \"vel_pitch\": %lf, \"vel_roll\": %lf}", 
+        yaw, pitch, roll, vel_yaw, vel_pitch, vel_roll, time);
         lf_print("json: %s", message.message);
         message.length = size;
         message.binary = false;
