@@ -121,7 +121,7 @@ reactor MujocoSimulator(
 
     @wcet("100 ms")
     reaction(simulation_step_timer) -> call_controller {=
-        mj_step(self->model, self->data); // Problematic
+        mj_step(self->model, self->data);
         mjData* new_data = mj_makeData(self->model);
         mj_copyData(new_data, self->model, self->data);
         lf_set(call_controller, new_data);

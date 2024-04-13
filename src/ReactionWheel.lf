@@ -5,8 +5,8 @@
 
 
  target C {
-    // cmake-include: ["./mujoco.cmake"], // For desktop
-    cmake-include: ["./mujoco-rpi.cmake"], // For RPi4
+    cmake-include: ["./mujoco.cmake"], // For desktop
+    // cmake-include: ["./mujoco-rpi.cmake"], // For RPi4
     scheduler: STATIC,
     // workers: 1,
     // timeout: 810 weeks, // 15 years of lifetime
@@ -27,6 +27,7 @@ import TcpSocketClient from "./TcpSocketClient.lf"
 
 preamble {=
     #include "reaction_wheel.h"
+    #include "common.h"
 =}
 
 /**
@@ -123,8 +124,12 @@ reactor Controller(period=100ms) {
         // Send status to the data processing unit.
         Telemetry telemetry;
         
-        telemetry.angular_momentum = 0;
-        telemetry.angle = self->current_angle[0];
+        telemetry.yaw = self->current_angle[0];
+        telemetry.pitch = self->current_angle[1];
+        telemetry.roll = self->current_angle[2];
+        telemetry.vel_yaw = 0;
+        telemetry.vel_pitch = 0;
+        telemetry.vel_roll = 0;
         telemetry.time = lf_time_physical_elapsed();
 
         TcpMessage message;
@@ -321,7 +326,8 @@ main reactor {
     controller = new Controller()
     user_input = new UserInput()
     file = new SimulatorInterface()
-    tcpClient = new TcpSocketClient(host="192.168.123.111", port=31812);
+    tcpClient = new TcpSocketClient(host="127.0.0.1", port=31812);
+    // tcpClient = new TcpSocketClient(host="192.168.123.111", port=31812);
 
     // interfacing with controller
     sim.model_pointer -> file.model_pointer

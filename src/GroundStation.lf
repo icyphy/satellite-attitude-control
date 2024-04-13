@@ -1,5 +1,6 @@
 target C {
     //files: [ "./common.c" ]
+    build-type: Debug,
 }
 
 import TcpSocketServer from "./TcpSocketServer.lf"
@@ -11,7 +12,7 @@ preamble {=
 
 
 reactor SatelitteConnection {
-    socket = new TcpSocketServer(host="127.0.0.1", port=31812);
+    socket = new TcpSocketServer(check_frequency=1sec, host="127.0.0.1", port=31812);
 
     output telemetry: Telemetry;
 
@@ -48,43 +49,6 @@ main reactor {
     reaction(startup) {=
         lf_print("======== Starting server. Open WebSocket.html in your favorite browser.");
     =}
-
-    /*timer t(0s, 1s);
-    reaction(t) -> s.send {=
-        double yaw = random() / 10000000.0;
-        double pitch = random() / 10000000.0;
-        double roll = random() / 10000000.0;
-        unsigned long ctime = time(NULL);
-
-        //lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
-        /*web_socket_message_t* message = malloc(sizeof(web_socket_instance_t));
-
-        message->message = malloc(200);
-        message->wsi = NULL;
-        int size = sprintf(message->message, "{\"yaw\": %lf, \"pitch\": %lf, \"roll\": %li}", yaw, pitch, roll);
-        lf_print("json: %s", message->message);
-        message->length = size;
-        message->binary = false;
-        message->next = NULL; */
-
-        //lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
-      /*  web_socket_message_t message; // = malloc(sizeof(web_socket_instance_t));
-
-        message.message = malloc(200);
-        message.wsi = NULL;
-        int size = sprintf(message.message, "{\"yaw\": %lf, \"pitch\": %lf, \"roll\": %li}", yaw, pitch, roll, time);
-        lf_print("json: %s", message.message);
-        message.length = size;
-        message.binary = false;
-        message.next = NULL;
-
-        lf_set(s.send, message);
- 
-        
-        //lf_token_t* token = lf_new_token((lf_port_base_t*)s.send, (void*)message, 1);
-        //lf_set_token(s.send, token);
-        lf_set(s.send, message);   
-    =}*/
 
     reaction(satallite_conntection.telemetry) -> s.send {=
         double yaw = satallite_conntection.telemetry->value.yaw;

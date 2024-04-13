@@ -10,7 +10,7 @@ target C {
 import TcpSocketServer from "./TcpSocketServer.lf"
 
 preamble {=
-#include "./common.h"
+#include "common.h"
 =}
 
 reactor Process {
@@ -38,18 +38,22 @@ reactor Process {
   =}
 
   reaction(telemetry_in) {=
-    double angle = telemetry_in->value.angle;
-    double angular_momentum = telemetry_in->value.angular_momentum;
+    double yaw = telemetry_in->value.yaw;
+    double pitch = telemetry_in->value.pitch;
+    double roll = telemetry_in->value.roll;
+    double vel_yaw = telemetry_in->value.vel_yaw;
+    double vel_pitch = telemetry_in->value.vel_pitch;
+    double vel_roll = telemetry_in->value.vel_roll;
     unsigned long time = telemetry_in->value.time;
-    lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
+    lf_print("[Telemetry] yaw: %lf, vel_yaw: %f, pitch: %lf, vel_pitch: %f, roll: %lf, vel_roll: %f, time: %lld", yaw, vel_yaw, pitch, vel_pitch, roll, vel_roll, time);
   =}
 }
 
 
 main reactor {
   process = new Process()
-  // socket = new TcpSocketServer(host="127.0.0.1", port=31812);
-  socket = new TcpSocketServer(host="192.168.123.111", port=31812);
+  socket = new TcpSocketServer(host="127.0.0.1", port=31812);
+  // socket = new TcpSocketServer(host="192.168.123.111", port=31812);
   process.telemetry_out -> process.telemetry_in
   socket.from_satelitte -> process.from_reactionWheel
 }
