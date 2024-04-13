@@ -7,6 +7,7 @@ target C {
     build-type: Debug,
 }
 
+import TcpSocketClient from "./TcpSocketClient.lf"
 import TcpSocketServer from "./TcpSocketServer.lf"
 
 preamble {=
@@ -14,9 +15,12 @@ preamble {=
 =}
 
 reactor Process {
-  input from_reactionWheel: MessageFromClient;
-  input telemetry_in: Telemetry;
-  output telemetry_out: Telemetry;
+  input from_reactionWheel: MessageFromClient
+  input telemetry_in: Telemetry
+  output telemetry_out: Telemetry
+  output to_ground: TcpMessage
+  state latest: Telemetry
+  timer send_to_ground(0, 1 sec)
 
   reaction (from_reactionWheel) -> telemetry_out {=
     MessageFromClient message = from_reactionWheel->value;
@@ -38,22 +42,38 @@ reactor Process {
   =}
 
   reaction(telemetry_in) {=
-    double yaw = telemetry_in->value.yaw;
-    double pitch = telemetry_in->value.pitch;
-    double roll = telemetry_in->value.roll;
-    double vel_yaw = telemetry_in->value.vel_yaw;
-    double vel_pitch = telemetry_in->value.vel_pitch;
-    double vel_roll = telemetry_in->value.vel_roll;
-    unsigned long time = telemetry_in->value.time;
-    lf_print("[Telemetry] yaw: %lf, vel_yaw: %f, pitch: %lf, vel_pitch: %f, roll: %lf, vel_roll: %f, time: %lld", yaw, vel_yaw, pitch, vel_pitch, roll, vel_roll, time);
+    self->latest.yaw = telemetry_in->value.yaw;
+    self->latest.pitch = telemetry_in->value.pitch;
+    self->latest.roll = telemetry_in->value.roll;
+    self->latest.vel_yaw = telemetry_in->value.vel_yaw;
+    self->latest.vel_pitch = telemetry_in->value.vel_pitch;
+    self->latest.vel_roll = telemetry_in->value.vel_roll;
+    self->latest.time = telemetry_in->value.time;
+
+    lf_print("[Telemetry] yaw: %lf, vel_yaw: %f, pitch: %lf, vel_pitch: %f, roll: %lf, vel_roll: %f, time: %lld", 
+      self->latest.yaw, self->latest.vel_yaw, self->latest.pitch, self->latest.vel_pitch, self->latest.roll, self->latest.vel_roll, self->latest.time);
+  =}
+
+  reaction(send_to_ground) -> to_ground {=
+    TcpMessage message;
+    message.message = malloc(sizeof(Telemetry));
+    memcpy(message.message, &self->latest, sizeof(Telemetry));
+    message.size = sizeof(Telemetry);
+    message.descriptor = 0;
+    
+    lf_print("send telemetry");
+    lf_set(to_ground, message);
   =}
 }
 
 
 main reactor {
   process = new Process()
-  socket = new TcpSocketServer(host="127.0.0.1", port=31812);
-  // socket = new TcpSocketServer(host="192.168.123.111", port=31812);
+  receiveFromReactionWheel = new TcpSocketServer(host="127.0.0.1", port=31811);
+  // receiveFromReactionWheel = new TcpSocketServer(host="192.168.123.111", port=31811);
+  sendToGroundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
+  
   process.telemetry_out -> process.telemetry_in
-  socket.from_satelitte -> process.from_reactionWheel
+  receiveFromReactionWheel.from_satelitte -> process.from_reactionWheel
+  process.to_ground -> sendToGroundstation.to_ground
 }

@@ -11,7 +11,7 @@
     // workers: 1,
     // timeout: 810 weeks, // 15 years of lifetime
     // timeout: 1200 msec, // For testing
-    timeout: 100 msec,
+    // timeout: 100 msec,
     /*
     single-threaded is required to start a GLFW window on macOS,
     since a window can only be spawned from the main thread.
@@ -37,7 +37,6 @@ preamble {=
 reactor Gyroscope(period=10ms) {
     timer t(10ms, period)
     state value: float[3] = {0}
-
     input sim: float[3]
     output out: float[3]
 
@@ -64,29 +63,33 @@ reactor Gyroscope(period=10ms) {
  */
 reactor AngularRateSensor(period=10ms) {
     timer t(10ms, period)
-    state value: float
-
-    input sim: float
-    output out: float
+    state value: float[3] = {0}
+    input sim: float[3]
+    output out: float[3]
 
     @wcet("100 usec")
     reaction(t) -> out {=
-        lf_set(out, self->value);
+        out->value[0] = self->value[0];
+        out->value[1] = self->value[1];
+        out->value[2] = self->value[2];
+        lf_set_present(out);
     =}
 
     @wcet("100 usec")
     reaction (sim) {=
-        self->value = sim->value;
+        self->value[0] = sim->value[0];
+        self->value[1] = sim->value[1];
+        self->value[2] = sim->value[2];
     =}
 }
 reactor Controller(period=100ms) {
     input current_angle: float[3]
-    input current_speed: float
+    input current_speed: float[3]
     input desired_angle: float[3]
     input sendCommand_in: bool
 
     state current_angle: float[3] = {0}
-    state current_speed: float
+    state current_speed: float[3] = {0}
     state desired_angle: float[3] = {0}
     state last_update: {=unsigned long=}
     state last_error: float[3] = {0}
@@ -94,7 +97,9 @@ reactor Controller(period=100ms) {
 
     output controll_signal: float[3]
     output sendCommand_out: bool
-    output update_status: {=TcpMessage=}
+    output update_status: TcpMessage
+
+    timer send_update(10 msec, 10 msec)
 
     preamble {=
     #include <string.h>
@@ -102,13 +107,16 @@ reactor Controller(period=100ms) {
 
     @wcet("100 usec")
     reaction(desired_angle) {=
-        self->desired_angle = desired_angle->value;
+        self->desired_angle[0] = desired_angle->value[0];
+        self->desired_angle[1] = desired_angle->value[1];
+        self->desired_angle[2] = desired_angle->value[2];
     =}
 
     @wcet("100 usec")
     reaction(current_speed) {=
-        self->current_speed = current_speed->value;
-    
+        self->current_speed[0] = current_speed->value[0];
+        self->current_speed[1] = current_speed->value[1];
+        self->current_speed[2] = current_speed->value[2];
     =}   
 
     @wcet("100 usec")
@@ -120,27 +128,7 @@ reactor Controller(period=100ms) {
     =}
 
     @wcet("20 ms")
-    reaction(sendCommand_in) -> update_status, controll_signal {=
-        // Send status to the data processing unit.
-        Telemetry telemetry;
-        
-        telemetry.yaw = self->current_angle[0];
-        telemetry.pitch = self->current_angle[1];
-        telemetry.roll = self->current_angle[2];
-        telemetry.vel_yaw = 0;
-        telemetry.vel_pitch = 0;
-        telemetry.vel_roll = 0;
-        telemetry.time = lf_time_physical_elapsed();
-
-        TcpMessage message;
-        message.message = malloc(sizeof(Telemetry));
-        memcpy(message.message, &telemetry, sizeof(Telemetry));
-        message.size = sizeof(Telemetry);
-        message.descriptor = 0;
-        
-        lf_print("send telemetry");
-        lf_set(update_status, message);
-
+    reaction(sendCommand_in) -> controll_signal {=
         // Send control signals.
         const double i_controller_value = -12;
         const double p_controller_value = -8;
@@ -186,6 +174,30 @@ reactor Controller(period=100ms) {
 
         lf_set_present(controll_signal);
     =} 
+
+    // Send an update to the data processing unit every 10 msec.
+    @wcet("20 ms")
+    reaction(send_update) -> update_status {=
+        // Send status to the data processing unit.
+        Telemetry telemetry;
+        
+        telemetry.yaw = self->current_angle[0];
+        telemetry.pitch = self->current_angle[1];
+        telemetry.roll = self->current_angle[2];
+        telemetry.vel_yaw = self->current_speed[0];
+        telemetry.vel_pitch = self->current_speed[1];
+        telemetry.vel_roll = self->current_speed[2];
+        telemetry.time = lf_time_physical_elapsed();
+
+        TcpMessage message;
+        message.message = malloc(sizeof(Telemetry));
+        memcpy(message.message, &telemetry, sizeof(Telemetry));
+        message.size = sizeof(Telemetry);
+        message.descriptor = 0;
+        
+        lf_print("send telemetry");
+        lf_set(update_status, message);
+    =}
 
     @wcet("100 ms")
     reaction(shutdown) {==}
@@ -233,7 +245,7 @@ reactor SimulatorInterface {
 
     // interfacing with sensors
     output sensor_value_gyro: float[3];
-    output sensor_value_ars: float;
+    output sensor_value_ars: float[3];
 
     // FIXME: Sharing a pointer this way seems to cause double free.
     // How to prevent this from happening?
@@ -300,11 +312,19 @@ reactor SimulatorInterface {
         fprintf(self->file1, "%f, %f, %f\n", simulation->time * 1000.0, simulation->sensordata[wheel1_pos], simulation->sensordata[wheel1_vel]);
         fprintf(self->file2, "%f, %f, %f\n", simulation->time * 1000.0, simulation->sensordata[wheel2_pos], simulation->sensordata[wheel2_vel]);
 
+        // Angles
         sensor_value_gyro->value[0] = simulation->sensordata[wheel0_pos];
         sensor_value_gyro->value[1] = simulation->sensordata[wheel1_pos];
         sensor_value_gyro->value[2] = simulation->sensordata[wheel2_pos];
         lf_set_present(sensor_value_gyro);
+
+        // Angular velocities
+        sensor_value_ars->value[0] = simulation->sensordata[wheel0_vel];
+        sensor_value_ars->value[1] = simulation->sensordata[wheel1_vel];
+        sensor_value_ars->value[2] = simulation->sensordata[wheel2_vel];
+        lf_set_present(sensor_value_ars);
         
+        // Motor controls
         simulator_ctrl->value[0] = self->motor_output[0];
         simulator_ctrl->value[1] = self->motor_output[1];
         simulator_ctrl->value[2] = self->motor_output[2];
@@ -326,8 +346,8 @@ main reactor {
     controller = new Controller()
     user_input = new UserInput()
     file = new SimulatorInterface()
-    tcpClient = new TcpSocketClient(host="127.0.0.1", port=31812);
-    // tcpClient = new TcpSocketClient(host="192.168.123.111", port=31812);
+    tcpClient = new TcpSocketClient(host="127.0.0.1", port=31811);
+    // tcpClient = new TcpSocketClient(host="192.168.123.111", port=31811);
 
     // interfacing with controller
     sim.model_pointer -> file.model_pointer
