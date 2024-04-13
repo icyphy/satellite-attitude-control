@@ -16,15 +16,14 @@
     https://www.glfw.org/docs/3.3/intro_guide.html#thread_safety
     */
     // single-threaded: true,
-    files: ["../models/3_axis_reaction_wheel.xml"],
+    files: ["../models/3_axis_reaction_wheel.xml", "reaction_wheel.h"],
     build-type: Debug,
 }
 
 import MujocoSimulator from "./MujocoSimulator.lf";
 
 preamble {=
-#include <mujoco/mujoco.h>
-// #include <GLFW/glfw3.h>
+    #include "reaction_wheel.h"
 =}
 
 /**
@@ -129,7 +128,7 @@ reactor Controller(period=100ms) {
         unsigned long current_tag = (lf_time_physical());
 
         unsigned long time_diff = (current_tag - self->last_update);
-        printf("T = %lu OT = %lu DT = %lu\n", current_tag, self->last_update, time_diff);
+        lf_print("T = %lu OT = %lu DT = %lu", current_tag, self->last_update, time_diff);
         double velocity_vector[3]; 
         velocity_vector[0] = (self->current_angle[0] - self->desired_angle[0])/( ((float)time_diff) * 0.000001 );
         velocity_vector[1] = (self->current_angle[1] - self->desired_angle[1])/( ((float)time_diff) * 0.000001 );
@@ -157,7 +156,7 @@ reactor Controller(period=100ms) {
         self->last_update = current_tag;
         self->error_accumulator = self->error_accumulator * 0.25 + error[0];
         
-        printf("ANGLE = %f %f %f DESIRED ANGLE = %f %f %f MOTOR = %f %f %f\n", self->current_angle[0], self->current_angle[1], self->current_angle[2], self->desired_angle[0], self->desired_angle[1], self->desired_angle[2], controll_signal->value[0], controll_signal->value[1], controll_signal->value[2]);
+        lf_print("ANGLE = %f %f %f DESIRED ANGLE = %f %f %f MOTOR = %f %f %f", self->current_angle[0], self->current_angle[1], self->current_angle[2], self->desired_angle[0], self->desired_angle[1], self->desired_angle[2], controll_signal->value[0], controll_signal->value[1], controll_signal->value[2]);
 
         lf_set_present(controll_signal);
     =} 
@@ -204,7 +203,7 @@ reactor UserInput {
 reactor SimulatorInterface {
     // interfacing with mujoco simulator
     output simulator_ctrl: float[3];
-    input simulator_output: mjData*;
+    input simulator_output: mjData_ptr;
 
     // interfacing with sensors
     output sensor_value_gyro: float[3];
@@ -212,12 +211,12 @@ reactor SimulatorInterface {
 
     // FIXME: Sharing a pointer this way seems to cause double free.
     // How to prevent this from happening?
-    input model_pointer: mjModel*;
+    input model_pointer: mjModel_ptr;
 
     // interfacing with controller
     input controller_output: float[3];
 
-    state model: mjModel*;
+    state model: mjModel_ptr;
     state motor_output: float[3] = {0};
     state file0: FILE*;
     state file1: FILE*;
@@ -229,16 +228,13 @@ reactor SimulatorInterface {
         self->file1 = fopen("data1.csv", "w+");
         self->file2 = fopen("data2.csv", "w+");
         if (self->file0 == NULL) {
-            fprintf(stderr, "file cannot be opened");
-            exit(1);
+            lf_print_error_and_exit("file0 cannot be opened");
         }
         if (self->file1 == NULL) {
-            fprintf(stderr, "file cannot be opened");
-            exit(1);
+            lf_print_error_and_exit("file1 cannot be opened");
         }
         if (self->file2 == NULL) {
-            fprintf(stderr, "file cannot be opened");
-            exit(1);
+            lf_print_error_and_exit("file2 cannot be opened");
         }
         fprintf(self->file0,"time, platform_angle, joint_velocity\n");
         fprintf(self->file1,"time, platform_angle, joint_velocity\n");
@@ -298,7 +294,7 @@ reactor SimulatorInterface {
 }
 
 main reactor {
-    sim = new MujocoSimulator(file="../3_axis_reaction_wheel.xml");
+    sim = new MujocoSimulator(file="models/3_axis_reaction_wheel.xml");
     ars = new AngularRateSensor()
     gyro = new Gyroscope()
     controller = new Controller()
