@@ -136,7 +136,7 @@ reactor MujocoSimulator(
 
     @wcet("100 ms")
     reaction(draw_frame_timer) {=
-        lf_print("Render Frame");
+        // lf_print("Render Frame");
 
         /*
         if(self->visualize) {

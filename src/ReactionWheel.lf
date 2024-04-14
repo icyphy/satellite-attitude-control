@@ -91,9 +91,9 @@ reactor Controller(period=100ms) {
     state current_angle: float[3] = {0}
     state current_speed: float[3] = {0}
     state desired_angle: float[3] = {0}
-    state last_update: {=unsigned long=}
+    state last_update: {=unsigned long long=}
     state last_error: float[3] = {0}
-    state error_accumulator: float
+    state error_accumulator: float[3] = {0}
 
     output controll_signal: float[3]
     output sendCommand_out: bool
@@ -130,23 +130,23 @@ reactor Controller(period=100ms) {
     @wcet("20 ms")
     reaction(sendCommand_in) -> controll_signal {=
         // Send control signals.
-        const double i_controller_value = -12;
-        const double p_controller_value = -8;
-        const double d_controller_value = -1;
+        const double p_controller_value = -5;
+        const double i_controller_value = 0;
+        const double d_controller_value = 0;
 
         if (self->last_update == 0.0){
-            self->last_update = lf_time_physical();
+            self->last_update = lf_time_logical();
             return;
         }
         
-        unsigned long current_tag = (lf_time_physical());
+        unsigned long long current_tag = (lf_time_logical());
 
-        unsigned long time_diff = (current_tag - self->last_update);
-        lf_print("T = %lu OT = %lu DT = %lu", current_tag, self->last_update, time_diff);
+        unsigned long long time_diff = (current_tag - self->last_update);
+        // lf_print("T = %lu OT = %lu DT = %lu", current_tag, self->last_update, time_diff);
         double velocity_vector[3]; 
-        velocity_vector[0] = (self->current_angle[0] - self->desired_angle[0])/( ((float)time_diff) * 0.000001 );
-        velocity_vector[1] = (self->current_angle[1] - self->desired_angle[1])/( ((float)time_diff) * 0.000001 );
-        velocity_vector[2] = (self->current_angle[2] - self->desired_angle[2])/( ((float)time_diff) * 0.000001 );
+        velocity_vector[0] = (self->current_angle[0] - self->desired_angle[0])/( ((float)time_diff) * 0.000000001 );
+        velocity_vector[1] = (self->current_angle[1] - self->desired_angle[1])/( ((float)time_diff) * 0.000000001 );
+        velocity_vector[2] = (self->current_angle[2] - self->desired_angle[2])/( ((float)time_diff) * 0.000000001 );
         double error[3];
         error[0] = (self->current_angle[0] - self->desired_angle[0]);
         error[1] = (self->current_angle[1] - self->desired_angle[1]);
@@ -154,23 +154,25 @@ reactor Controller(period=100ms) {
 
         controll_signal->value[0] =
               p_controller_value * velocity_vector[0]  // present component
-            + i_controller_value * self->error_accumulator // integral component
+            + i_controller_value * self->error_accumulator[0] // integral component
             + d_controller_value * (self->last_error[0] - error[0]); // differential component
         // FIXME: Fill in the other two control signals.
         controll_signal->value[1] = 
               p_controller_value * velocity_vector[1]  // present component
-            + i_controller_value * self->error_accumulator // integral component
+            + i_controller_value * self->error_accumulator[1] // integral component
             + d_controller_value * (self->last_error[1] - error[1]); // differential component
         controll_signal->value[2] = 
               p_controller_value * velocity_vector[2]  // present component
-            + i_controller_value * self->error_accumulator // integral component
+            + i_controller_value * self->error_accumulator[2] // integral component
             + d_controller_value * (self->last_error[2] - error[2]); // differential component
 
         memcpy(self->last_error, error, sizeof(error));
         self->last_update = current_tag;
-        self->error_accumulator = self->error_accumulator * 0.25 + error[0];
+        self->error_accumulator[0] = self->error_accumulator[0] + error[0];
+        self->error_accumulator[1] = self->error_accumulator[1] + error[1];
+        self->error_accumulator[2] = self->error_accumulator[2] + error[2];
         
-        lf_print("ANGLE = %f %f %f DESIRED ANGLE = %f %f %f MOTOR = %f %f %f", self->current_angle[0], self->current_angle[1], self->current_angle[2], self->desired_angle[0], self->desired_angle[1], self->desired_angle[2], controll_signal->value[0], controll_signal->value[1], controll_signal->value[2]);
+        // lf_print("ANGLE = %f %f %f DESIRED ANGLE = %f %f %f MOTOR = %f %f %f", self->current_angle[0], self->current_angle[1], self->current_angle[2], self->desired_angle[0], self->desired_angle[1], self->desired_angle[2], controll_signal->value[0], controll_signal->value[1], controll_signal->value[2]);
 
         lf_set_present(controll_signal);
     =} 
@@ -195,7 +197,7 @@ reactor Controller(period=100ms) {
         message.size = sizeof(Telemetry);
         message.descriptor = 0;
         
-        lf_print("send telemetry");
+        // lf_print("send telemetry");
         lf_set(update_status, message);
     =}
 

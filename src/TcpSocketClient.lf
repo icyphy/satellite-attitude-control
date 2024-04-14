@@ -56,7 +56,7 @@ reactor TcpSocketClient(check_frequency: time = 1ms, host: {=const char*=} = "::
         uint32_t descriptor = convert_if_necessary(to_ground->value.descriptor);
         char* data = to_ground->value.message;
 
-        lf_print("size: %i descriptor: %i", to_ground->value.size, to_ground->value.descriptor);
+        // lf_print("size: %i descriptor: %i", to_ground->value.size, to_ground->value.descriptor);
 
         write(self->fd, &size, sizeof(size));
         write(self->fd, &descriptor, sizeof(descriptor));
@@ -72,13 +72,13 @@ reactor TcpSocketClient(check_frequency: time = 1ms, host: {=const char*=} = "::
 
         int bytes_read;
 
-        if (read(self->fd, &size, sizeof(uint32_t)) > 4) {
+        if (read(self->fd, &size, sizeof(uint32_t)) < 4) {
             // problem less then 4 bytes read
         };
 
         size = convert_if_necessary(size);
 
-        if (read(self->fd, &descriptor, sizeof(uint32_t)) > 4) {
+        if (read(self->fd, &descriptor, sizeof(uint32_t)) < 4) {
             // problem less then 4 bytes read
         };
 

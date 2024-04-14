@@ -72,6 +72,7 @@ main reactor {
   receiveFromReactionWheel = new TcpSocketServer(host="127.0.0.1", port=31811);
   // receiveFromReactionWheel = new TcpSocketServer(host="192.168.123.111", port=31811);
   sendToGroundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
+  // sendToGroundstation = new TcpSocketClient(host="88.198.121.105", port=31812); // Tassilo's server
   
   process.telemetry_out -> process.telemetry_in
   receiveFromReactionWheel.from_satelitte -> process.from_reactionWheel
