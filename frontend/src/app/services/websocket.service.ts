@@ -8,6 +8,6 @@ import {Telemetry} from "./telemetry.domain";
 export class WebSocketService {
 
   public sub(): Observable<Telemetry> {
-    return webSocket<Telemetry>("ws://tanneberger.me:8080")
+    return webSocket<Telemetry>("wss://lf.tanneberger.me/websocket")
   }
 }
