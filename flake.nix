@@ -3,21 +3,22 @@
 
   inputs = {
     utils.url = "github:numtide/flake-utils";
-    reactor-cpp.url = "github:lf-lang/reactor-cpp";
+    pnpm2nix = {
+      url = "github:nzbr/pnpm2nix-nzbr";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = inputs@{ self, utils, nixpkgs, reactor-cpp, ... }:
+  outputs = inputs@{ self, utils, nixpkgs, pnpm2nix, ... }:
     utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
       in
       rec {
         checks = packages;
-        packages.lf-mujoco = nixpkgs.legacyPackages.${system}.callPackage ./derivation.nix {
-          reactor-cpp = reactor-cpp.packages."${system}".reactor-cpp;
-        };
-        packages.default = nixpkgs.legacyPackages.${system}.callPackage ./derivation.nix {
-          reactor-cpp = reactor-cpp.packages."${system}".reactor-cpp;
+        packages.backend = nixpkgs.legacyPackages.${system}.callPackage ./pkgs/backend.nix { };
+        packages.frontend = nixpkgs.legacyPackages.${system}.callPackage ./pkgs/frontend.nix { 
+          mkPnpmPackage = pnpm2nix.packages."${system}".mkPnpmPackage;
         };
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = (with packages.lf-mujoco; buildInputs ++ nativeBuildInputs);

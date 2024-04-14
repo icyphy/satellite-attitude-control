@@ -7,3 +7,4 @@ MUJOCO_LOG.TXT
 *.log
 *.csv
 *.aux
+result
