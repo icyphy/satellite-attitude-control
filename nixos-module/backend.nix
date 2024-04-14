@@ -1,6 +1,6 @@
 { pkgs, config, lib, ... }:
 let
-  cfg = config.dd-ix.website-content-api;
+  cfg = config.lf.backend;
 in
 {
   options.lf.backend = with lib; {
