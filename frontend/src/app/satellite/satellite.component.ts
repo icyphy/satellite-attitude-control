@@ -18,11 +18,11 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   @ViewChild('canvas')
   private canvasRef!: ElementRef;
 
-  @Input() public frameRate: number = 0.04;
+  @Input() public framePeriod: number = 0.04;
 
-  @Input() public rotationSpeedX: number = 0.0;
-  @Input() public rotationSpeedY: number = 0.0;
-  @Input() public rotationSpeedZ: number = 0.0;
+  @Input() public rotationDeltaX: number = 0.0;
+  @Input() public rotationDeltaY: number = 0.0;
+  @Input() public rotationDeltaZ: number = 0.0;
 
   @Input() public size: number = 20.0;
 
@@ -82,11 +82,11 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
     return this.canvas.clientWidth / this.canvas.clientHeight;
   }
 
-  private animateCube() {
+  private rotateSatellite() {
     if (this.satellite !== undefined) {
-      this.satellite.rotation.x += this.rotationSpeedX;
-      this.satellite.rotation.y += this.rotationSpeedY;
-      this.satellite.rotation.z += this.rotationSpeedZ;
+      //this.satellite.rotation.x += this.rotationDeltaX;
+      //this.satellite.rotation.y += this.rotationDeltaY;
+      //this.satellite.rotation.z += this.rotationDeltaZ;
     }
   }
 
@@ -100,9 +100,9 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
       this.satellite.rotation.x = receivedMessage.yaw;
       this.satellite.rotation.y = receivedMessage.pitch;
       this.satellite.rotation.z = receivedMessage.roll;
-      this.rotationSpeedX = receivedMessage.vel_yaw * this.frameRate;
-      this.rotationSpeedY = receivedMessage.vel_pitch * this.frameRate;
-      this.rotationSpeedZ = receivedMessage.vel_roll * this.frameRate;
+      this.rotationDeltaX = receivedMessage.vel_yaw * this.framePeriod;
+      this.rotationDeltaY = receivedMessage.vel_pitch * this.framePeriod;
+      this.rotationDeltaZ = receivedMessage.vel_roll * this.framePeriod;
     });
     this.clock = new THREE.Clock();
     this.clock.start();
@@ -113,10 +113,10 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
       requestAnimationFrame(render);
       let currentTime = component.clock.getElapsedTime();
       console.log(currentTime, component.startTime, currentTime - component.startTime);
-      if (currentTime - component.startTime > component.frameRate) {
-        component.animateCube();
+      if (currentTime - component.startTime > component.framePeriod) {
+        component.rotateSatellite();
         component.renderer.render(component.scene, component.camera);
-        component.startTime += component.frameRate;
+        component.startTime += component.framePeriod;
       }
     }());
   }
