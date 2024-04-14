@@ -10,19 +10,27 @@
   };
 
   outputs = inputs@{ self, utils, nixpkgs, pnpm2nix, ... }:
-    utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in
-      rec {
-        checks = packages;
-        packages.backend = nixpkgs.legacyPackages.${system}.callPackage ./pkgs/backend.nix { };
-        packages.frontend = nixpkgs.legacyPackages.${system}.callPackage ./pkgs/frontend.nix { 
-          mkPnpmPackage = pnpm2nix.packages."${system}".mkPnpmPackage;
-        };
-        devShells.default = pkgs.mkShell {
-          nativeBuildInputs = (with packages.lf-mujoco; buildInputs ++ nativeBuildInputs);
-        };
-      }
-    );
+    (utils.lib.eachDefaultSystem
+      (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        rec {
+          checks = packages;
+          packages.backend = pkgs.callPackage ./pkgs/backend.nix { };
+          packages.frontend = pkgs.callPackage ./pkgs/frontend.nix {
+            mkPnpmPackage = pnpm2nix.packages."${system}".mkPnpmPackage;
+          };
+        })) // {
+
+      overlays.default = (final: prev: {
+        website = self.packages."${prev.system}".website;
+        backend = self.packages."${prev.system}".backend;
+      });
+
+      nixosModules = rec {
+        backend = import ./nixos-module/backend.nix;
+        default = backend;
+      };
+    };
 }

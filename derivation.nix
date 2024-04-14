@@ -4,7 +4,7 @@ stdenv.mkDerivation {
   version = "0.0.1";
 
   src = ./..;
-  
+
   depsBuildBuild = with pkgs; [
     pkg-config
   ];
@@ -17,13 +17,13 @@ stdenv.mkDerivation {
     glslang
   ];
 
-  buildInputs = with pkgs; [ 
-    which 
-    gcc 
+  buildInputs = with pkgs; [
+    which
+    gcc
     cmake
-    git 
-    mujoco 
-    jdk17_headless 
+    git
+    mujoco
+    jdk17_headless
     freeglut
     xorg.libX11
     xorg.libXext
