@@ -34,7 +34,7 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   @ViewChild('time')
   private timeRef!: ElementRef;
 
-  @Input() public framePeriod: number = 0.04;
+  @Input() public framePeriod: number = 0.025;
 
   @Input() public rotationDeltaX: number = 0.0;
   @Input() public rotationDeltaY: number = 0.0;
@@ -132,10 +132,10 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
       let current_y = this.satellite.rotation.y;
       let current_z = this.satellite.rotation.z;
 
-      for (let i = 1; i < 10; i++) {
-        let step_x = current_x + (receivedMessage.yaw - current_x) * (i / 10.0);
-        let step_y = current_y + (receivedMessage.pitch - current_y) * (i / 10.0);
-        let step_z = current_z + (receivedMessage.roll - current_z) * (i / 10.0);
+      for (let i = 1; i < 15; i++) {
+        let step_x = current_x + (receivedMessage.yaw - current_x) * (i / 15.0);
+        let step_y = current_y + (receivedMessage.pitch - current_y) * (i / 15.0);
+        let step_z = current_z + (receivedMessage.roll - current_z) * (i / 15.0);
         animation.push([step_x, step_y, step_z]);
       }
 
