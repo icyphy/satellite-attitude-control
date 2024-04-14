@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "groundstation-gui": {
+    "lf-frontend": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -15,11 +15,11 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/groundstation-gui",
+            "outputPath": "dist/lf/browser",
             "index": "src/index.html",
-            "browser": "src/main.ts",
+            "main": "src/main.ts",
             "polyfills": [
               "zone.js"
             ],
@@ -30,9 +30,23 @@
               "src/assets"
             ],
             "styles": [
+              "node_modules/@fontsource/dm-sans/400.css",
+              "node_modules/@fontsource/dm-sans/400-italic.css",
+              "node_modules/@fontsource/dm-sans/700.css",
+              "node_modules/@fontsource/dm-sans/700-italic.css",
+              "node_modules/@fontsource/dm-mono/400.css",
+              "node_modules/@fontsource/dm-mono/400-italic.css",
+              "node_modules/@fontsource/dm-mono/500.css",
+              "node_modules/@fontsource/dm-mono/500-italic.css",
+              "node_modules/@feel/style/main.scss",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "node_modules/@feel/style/global"
+              ]
+            }
           },
           "configurations": {
             "production": {
@@ -51,9 +65,12 @@
               "outputHashing": "all"
             },
             "development": {
+              "buildOptimizer": false,
               "optimization": false,
+              "vendorChunk": true,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "namedChunks": true
             }
           },
           "defaultConfiguration": "production"
@@ -62,10 +79,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "groundstation-gui:build:production"
+              "browserTarget": "lf-frontend:build:production"
             },
             "development": {
-              "buildTarget": "groundstation-gui:build:development"
+              "browserTarget": "lf-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -73,7 +90,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "buildTarget": "groundstation-gui:build"
+            "browserTarget": "lf-frontend:build"
           }
         },
         "test": {
@@ -87,19 +104,94 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/id_ed25519.pub",
+              "src/0x3DF81C6A.asc"
             ],
             "styles": [
+              "node_modules/@fontsource/dm-sans/400.css",
+              "node_modules/@fontsource/dm-sans/400-italic.css",
+              "node_modules/@fontsource/dm-sans/700.css",
+              "node_modules/@fontsource/dm-sans/700-italic.css",
+              "node_modules/@fontsource/dm-mono/400.css",
+              "node_modules/@fontsource/dm-mono/400-italic.css",
+              "node_modules/@fontsource/dm-mono/500.css",
+              "node_modules/@fontsource/dm-mono/500-italic.css",
+              "node_modules/@feel/style/main.scss",
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "node_modules/@feel/style/global"
+              ]
+            }
           }
+        },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/lf-frontend/server",
+            "main": "server.ts",
+            "tsConfig": "tsconfig.server.json",
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "node_modules/@feel/style/global"
+              ]
+            },
+            "inlineStyleLanguage": "scss"
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "media"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "sourceMap": true,
+              "extractLicenses": false,
+              "vendorChunk": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve-ssr": {
+          "builder": "@nguniversal/builders:ssr-dev-server",
+          "configurations": {
+            "development": {
+              "browserTarget": "lf-frontend:build:development",
+              "serverTarget": "lf-frontend:server:development"
+            },
+            "production": {
+              "browserTarget": "lf-frontend:build:production",
+              "serverTarget": "lf-frontend:server:production"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "prerender": {
+          "builder": "@nguniversal/builders:prerender",
+          "options": {
+            "routes": [
+              "/"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "lf-frontend:build:production",
+              "serverTarget": "lf-frontend:server:production"
+            },
+            "development": {
+              "browserTarget": "lf-frontend:build:development",
+              "serverTarget": "lf-frontend:server:development"
+            }
+          },
+          "defaultConfiguration": "production"
         }
       }
     }
   },
   "cli": {
-    "analytics": false,
-    "packageManager": "pnpm"
+    "analytics": false
   }
 }

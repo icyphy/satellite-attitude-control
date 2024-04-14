@@ -1,1 +1,61 @@
-/* You can add global styles to this file, and also import other style files */
+@import "theme", "vars";
+
+@include theme(
+  $c-primary: #65b32e,
+  $c-secondary: darken(#1f2650, 10%),
+  $c-secondary-l: lighten(#1f2638, 20%),
+  $c-secondary-ll: lighten(#1f2638, 20%),
+  $c-secondary-d: lighten(#1f2638, 20%),
+);
+
+.container {
+  max-width: 1000px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem 0 3rem;
+}
+
+
+h1, h2, h3, h4 {
+  position: relative;
+
+  &::before {
+    color: $c-primary;
+    margin-right: 0.5rem;
+    position: absolute;
+    right: 100%;
+  }
+
+
+  &, &:before {
+    font-family: $f-family-mono;
+    font-weight: 500;
+  }
+}
+
+//h1::before {
+//  content: '#';
+//}
+
+//h2::before {
+//  content: '##';
+//}
+
+h3::before {
+  content: '###';
+}
+
+h4::before {
+  content: '####';
+}
+
+.typography code {
+  background-color: $c-secondary-l;
+}
+
+img {
+  border: 0.1rem solid $c-card-secondary;
+  background-color: $c-card;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}

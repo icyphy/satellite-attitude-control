@@ -1,18 +1,10 @@
 #include <iostream>
-#include <assert.h>
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <cstdint>
 #include <cstring>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-#include <fcntl.h>
 #include <optional>
 #include <algorithm>
-
-#include <vector>
-#include <mutex>
 #include <thread>
 
 #include "common.h"
@@ -117,7 +109,7 @@ public:
 
         std::cout << "message with size %i and descriptor %i" << std::endl;
 
-        assert(bytes_read != size); // missmatching amount of bytes read from what has been specified
+        assert(bytes_read != size); // mismatching amount of bytes read from what has been specified
 
         TcpMessage message;
 
@@ -152,7 +144,7 @@ auto convert_telemetry_to_json(Telemetry telemetry) -> std::string {
     //lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
 
     char* message = static_cast<char *>(malloc(300));
-    int size = sprintf(message, R"({"yaw": %lf, "pitch": %lf, "roll": %li, "vel_yaw": %lf, "vel_pitch": %lf, "vel_roll": %lf})",
+    int size = sprintf(message, R"({"yaw": %lf, "pitch": %lf, "roll": %lf, "vel_yaw": %lf, "vel_pitch": %lf, "vel_roll": %lf, "time": %li})",
                        yaw, pitch, roll, vel_yaw, vel_pitch, vel_roll, time);
 
     std::cout << "json: " << message << std::endl;

@@ -3,7 +3,7 @@ import {BrowserModule, provideClientHydration} from '@angular/platform-browser';
 import {AppComponent} from './app/app.component';
 import {RouterLink, RouterOutlet} from "@angular/router";
 import {AppRoutingModule} from "./app-routing.module";
-import {CubeComponent} from "./cube/cube.component";
+import {SatelliteComponent} from "./satellite/satellite.component";
 
 @NgModule({
   declarations: [

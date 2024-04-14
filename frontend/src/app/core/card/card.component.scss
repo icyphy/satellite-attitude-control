@@ -1,0 +1,62 @@
+@import "vars";
+
+:host {
+  & > {
+    a, div {
+      border: 0.1rem solid $c-card-secondary;
+      background-color: $c-card;
+      border-radius: 0.5rem;
+      overflow: hidden;
+
+      &.shadow {
+        display: block;
+        background-position: center;
+        background-size: cover;
+        background-repeat: no-repeat;
+        color: $f-color-inverted;
+
+        div.container {
+          background-color: rgba(0, 0, 0, 0.75);
+        }
+
+        &.inverse-shadow div.container {
+          background-color: rgba(255, 255, 255, 0.8);
+        }
+      }
+
+      &:not(.shadow), &.shadow div.container {
+        padding: 1rem;
+        display: flex;
+        justify-items: center;
+
+        div.icon:not(:empty) {
+          display: flex;
+          align-items: center;
+          margin-right: 1rem;
+        }
+
+        div.content {
+          display: flex;
+          flex-direction: column;
+          flex-grow: 1;
+        }
+      }
+    }
+
+    a {
+      transition: 150ms border-color ease-in-out;
+
+      &:hover {
+        border-color: $c-primary;
+      }
+    }
+  }
+
+  &.light-shadow > {
+    a, div {
+      &.shadow div.container {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+}

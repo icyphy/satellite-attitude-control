@@ -1,0 +1,47 @@
+<ng-template #body>
+  <div class="icon">
+    <ng-content select=".icon"></ng-content>
+  </div>
+  <div class="content">
+    <ng-content></ng-content>
+  </div>
+</ng-template>
+
+<ng-template #wrapper>
+  <div *ngIf="backgroundImage; else raw" class="container">
+    <ng-container *ngTemplateOutlet="body"></ng-container>
+  </div>
+  <ng-template #raw>
+    <ng-container *ngTemplateOutlet="body"></ng-container>
+  </ng-template>
+</ng-template>
+
+<div *ngIf="!link; else withLink"
+     [class.inverse-shadow]="inverseShadow"
+     [class.shadow]="backgroundImage"
+     [style.background-image]="buildBackgroundImageUrl(backgroundImage)">
+  <ng-container *ngTemplateOutlet="wrapper"></ng-container>
+</div>
+
+<ng-template #withLink>
+  <a *ngIf="!isExternal(); else external"
+     [class.inverse-shadow]="inverseShadow"
+     [class.shadow]="backgroundImage"
+     [routerLink]="link"
+     [style.background-image]="buildBackgroundImageUrl(backgroundImage)"
+     class="not">
+    <ng-container *ngTemplateOutlet="wrapper"></ng-container>
+  </a>
+
+  <ng-template #external>
+    <a [class.inverse-shadow]="inverseShadow"
+       [class.shadow]="backgroundImage"
+       [href]="link"
+       [style.background-image]="buildBackgroundImageUrl(backgroundImage)"
+       class="not"
+       rel="me"
+       target="_blank">
+      <ng-container *ngTemplateOutlet="wrapper"></ng-container>
+    </a>
+  </ng-template>
+</ng-template>
