@@ -7,19 +7,19 @@
     <div class="authors">
       <div class="author">
         <b>Shaokai Lin</b>
-        <a href="mailto:shaokai@berkeley.edu">shaokai&#64;berkeley.edu</a>
+        <a class="typography" href="mailto:shaokai@berkeley.edu">shaokai&#64;berkeley.edu</a>
       </div>
       <div class="author">
         <b>Tassilo Tanneberger</b>
-        <a href="mailto:tassilo.tanneberger@tu-dresden.de">tassilo.tanneberger&#64;tu-dresden.de</a>
+        <a class="typography" href="mailto:tassilo.tanneberger@tu-dresden.de">tassilo.tanneberger&#64;tu-dresden.de</a>
       </div>
       <div class="author">
         <b>Erling Jellum</b>
-        <a href="mailto:erling.r.jellum@ntnu.no">erling.r.jellum&#64;ntnu.no</a>
+        <a class="typography" href="mailto:erling.r.jellum@ntnu.no">erling.r.jellum&#64;ntnu.no</a>
       </div>
       <div class="author">
-        <b>Edward Ashford Lee</b>
-        <a href="mailto:eal@berkeley.edu">eal&#64;berkeley.edu</a>
+        <b>Edward Lee</b>
+        <a class="typography" href="mailto:eal@berkeley.edu">eal&#64;berkeley.edu</a>
       </div>
     </div>
 
@@ -28,18 +28,18 @@
         Abstract goes here!
       </p>
 
-      <feel-button routerLink="satellite">Demo!</feel-button>
+      <feel-button routerLink="satellite"><b class="demo-button">Demo!</b></feel-button>
     </div>
 
     <div class="footer">
-      <app-card [lightShadow]="true" class="left" backgroundImage="/assets/images/berkeley-bg.webp" link="https://berkeley.edu">
-          <app-icon-ucb></app-icon-ucb>
+      <app-card [inverseShadow]="true" backgroundImage="/assets/images/berkeley-bg.webp" link="https://eecs.berkeley.edu">
+         <app-icon-ucb class="logo"></app-icon-ucb>
       </app-card>
-      <app-card [lightShadow]="true" class="left" backgroundImage="/assets/images/tud.webp" link="https://cs.tu-dresden.de">
-        <app-icon-tud></app-icon-tud>
+      <app-card [inverseShadow]="true" backgroundImage="/assets/images/tud.webp" link="https://cs.tu-dresden.de">
+        <app-icon-tud class="logo"></app-icon-tud>
       </app-card>
-      <app-card [lightShadow]="true" class="left" backgroundImage="/assets/images/ntnu-bg.webp" link="https://ntnu.no">
-        <app-icon-ntnu></app-icon-ntnu>
+      <app-card [inverseShadow]="true" backgroundImage="/assets/images/ntnu-bg.webp" link="https://ntnu.no">
+        <app-icon-ntnu class="logo"></app-icon-ntnu>
       </app-card>
     </div>
   </div>

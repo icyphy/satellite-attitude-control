@@ -16,11 +16,11 @@
         color: $f-color-inverted;
 
         div.container {
-          background-color: rgba(0, 0, 0, 0.80);
+          background-color: rgba(0, 0, 0, 0.75);
         }
 
         &.inverse-shadow div.container {
-          background-color: rgba(255, 255, 255, 0.7);
+          background-color: rgba(255, 255, 255, 0.8);
         }
       }
 
@@ -55,7 +55,7 @@
   &.light-shadow > {
     a, div {
       &.shadow div.container {
-        background-color: rgba(0, 0, 0, 0.45);
+        background-color: rgba(0, 0, 0, 0.55);
       }
     }
   }
