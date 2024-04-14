@@ -24,7 +24,7 @@
         })) // {
 
       overlays.default = (final: prev: {
-        lf-website = self.packages."${prev.system}".lf-website;
+        lf-frontend = self.packages."${prev.system}".lf-frontend;
         lf-backend = self.packages."${prev.system}".lf-backend;
       });
 
