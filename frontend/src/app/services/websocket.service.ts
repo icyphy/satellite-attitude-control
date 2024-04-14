@@ -9,5 +9,6 @@ export class WebSocketService {
 
   public sub(): Observable<Telemetry> {
     return webSocket<Telemetry>("wss://lf.tanneberger.me/websocket")
+    //return webSocket<Telemetry>("ws://127.0.0.1:8080")
   }
 }

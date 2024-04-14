@@ -37,6 +37,8 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   private clock!: THREE.Clock;
   private startTime!: number;
 
+  private animation: [[number, number, number]] = [[0, 0, 0]];
+
   private get canvas(): HTMLCanvasElement {
     return this.canvasRef.nativeElement;
   }
@@ -84,6 +86,19 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
 
   private rotateSatellite() {
     if (this.satellite !== undefined) {
+      if (this.animation.length > 0) {
+        let first = this.animation[0];
+        this.animation.shift();
+
+        if(first == undefined) {
+          return;
+        }
+
+        this.satellite.rotation.x = first[0];
+        this.satellite.rotation.y = first[1];
+        this.satellite.rotation.z = first[2];
+
+      }
       //this.satellite.rotation.x += this.rotationDeltaX;
       //this.satellite.rotation.y += this.rotationDeltaY;
       //this.satellite.rotation.z += this.rotationDeltaZ;
@@ -96,10 +111,23 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 
     this.websocketService.sub().subscribe((receivedMessage: Telemetry) => {
-      console.log("received");
-      this.satellite.rotation.x = receivedMessage.yaw;
-      this.satellite.rotation.y = receivedMessage.pitch;
-      this.satellite.rotation.z = receivedMessage.roll;
+      let animation: [[number, number, number]] = [[this.satellite.rotation.x, this.satellite.rotation.y, this.satellite.rotation.z]];
+      let current_x = this.satellite.rotation.x;
+      let current_y = this.satellite.rotation.y;
+      let current_z = this.satellite.rotation.z;
+
+      for (let i = 1; i < 10; i++) {
+        let step_x = current_x + (receivedMessage.yaw - current_x) * (i / 10.0);
+        let step_y = current_y + (receivedMessage.pitch - current_y) * (i / 10.0);
+        let step_z = current_z + (receivedMessage.roll - current_z) * (i / 10.0);
+        animation.push([step_x, step_y, step_z]);
+      }
+
+      this.animation = animation;
+
+      //this.satellite.rotation.x = receivedMessage.yaw;
+      //this.satellite.rotation.y = receivedMessage.pitch;
+      //this.satellite.rotation.z = receivedMessage.roll;
       this.rotationDeltaX = receivedMessage.vel_yaw * this.framePeriod;
       this.rotationDeltaY = receivedMessage.vel_pitch * this.framePeriod;
       this.rotationDeltaZ = receivedMessage.vel_roll * this.framePeriod;
@@ -112,7 +140,7 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
     (function render() {
       requestAnimationFrame(render);
       let currentTime = component.clock.getElapsedTime();
-      console.log(currentTime, component.startTime, currentTime - component.startTime);
+      //console.log(currentTime, component.startTime, currentTime - component.startTime);
       if (currentTime - component.startTime > component.framePeriod) {
         component.rotateSatellite();
         component.renderer.render(component.scene, component.camera);
