@@ -1,0 +1,20 @@
+.canvas {
+  width: 80%;
+  height: 80%;
+}
+.telemetry {
+  display: flex;
+  flex-direction: column;
+  gap: 0rem;
+}
+
+.element {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+}
+
+.monitor {
+  display: flex;
+  flex-direction: row;
+}

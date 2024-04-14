@@ -5,5 +5,6 @@ export interface Telemetry {
   roll: number,
   vel_yaw: number,
   vel_pitch: number,
-  vel_roll: number
+  vel_roll: number,
+  time: number
 }

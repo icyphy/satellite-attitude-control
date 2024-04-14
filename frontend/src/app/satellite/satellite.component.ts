@@ -18,6 +18,22 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   @ViewChild('canvas')
   private canvasRef!: ElementRef;
 
+  @ViewChild('xrot')
+  private xrotRef!: ElementRef;
+  @ViewChild('yrot')
+  private yrotRef!: ElementRef;
+  @ViewChild('zrot')
+  private zrotRef!: ElementRef;
+
+  @ViewChild('xpos')
+  private xposRef!: ElementRef;
+  @ViewChild('ypos')
+  private yposRef!: ElementRef;
+  @ViewChild('zpos')
+  private zposRef!: ElementRef;
+  @ViewChild('time')
+  private timeRef!: ElementRef;
+
   @Input() public framePeriod: number = 0.04;
 
   @Input() public rotationDeltaX: number = 0.0;
@@ -124,13 +140,20 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
       }
 
       this.animation = animation;
+      this.xrotRef.nativeElement.innerText = receivedMessage.vel_yaw;
+      this.yrotRef.nativeElement.innerText = receivedMessage.vel_pitch;
+      this.zrotRef.nativeElement.innerText = receivedMessage.vel_roll;
+      this.xposRef.nativeElement.innerText = receivedMessage.yaw;
+      this.yposRef.nativeElement.innerText = receivedMessage.pitch;
+      this.zposRef.nativeElement.innerText = receivedMessage.roll;
+      this.timeRef.nativeElement.innerText = receivedMessage.time;
 
       //this.satellite.rotation.x = receivedMessage.yaw;
       //this.satellite.rotation.y = receivedMessage.pitch;
       //this.satellite.rotation.z = receivedMessage.roll;
-      this.rotationDeltaX = receivedMessage.vel_yaw * this.framePeriod;
-      this.rotationDeltaY = receivedMessage.vel_pitch * this.framePeriod;
-      this.rotationDeltaZ = receivedMessage.vel_roll * this.framePeriod;
+      //this.rotationDeltaX = receivedMessage.vel_yaw * this.framePeriod;
+      //this.rotationDeltaY = receivedMessage.vel_pitch * this.framePeriod;
+      //this.rotationDeltaZ = receivedMessage.vel_roll * this.framePeriod;
     });
     this.clock = new THREE.Clock();
     this.clock.start();
