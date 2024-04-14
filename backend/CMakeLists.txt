@@ -9,6 +9,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 #set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra")
 
 include(FindPkgConfig)
+include_directories(/usr/local/include)
 
 find_package (Threads REQUIRED)
 #find_package(gRPC CONFIG REQUIRED)

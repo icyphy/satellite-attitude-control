@@ -16,7 +16,6 @@
 typedef websocketpp::server<websocketpp::config::asio> server;
 
 using websocketpp::connection_hdl;
-using websocketpp::lib::bind;
 
 using websocketpp::lib::thread;
 using websocketpp::lib::mutex;

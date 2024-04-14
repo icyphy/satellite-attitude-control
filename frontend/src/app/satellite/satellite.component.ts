@@ -69,6 +69,11 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   private createScene() {
     this.scene = new THREE.Scene;
     this.scene.background = new THREE.Color(0xFFFFFF);
+    // Add lighting
+    this.scene.add(new THREE.AmbientLight(0xffffff, 0.5));  // Adjust intensity to suitable value
+    let directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(1, 1, 1);
+    this.scene.add(directionalLight);
     //this.scene.add(this.cube);
     this.loader.load(
       'assets/model.urdf',                    // The path to the URDF within the package OR absolute
