@@ -13,6 +13,23 @@
   width: 33%;
 }
 
+.uni-body {
+  height: 5rem;
+}
+
+.authors {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: space-around;
+}
+
+.author {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .elements {
   display: flex;
   flex-direction: column;

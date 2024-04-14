@@ -8,3 +8,4 @@ MUJOCO_LOG.TXT
 *.csv
 *.aux
 result
+cmake-build-debug

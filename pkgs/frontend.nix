@@ -9,7 +9,8 @@ mkPnpmPackage {
 
   installPhase = ''
     mkdir -p $out/html
-    cp -r ./dist/groundstation-gui/browser/* $out/html/
+    ls -alh ./dist/
+    cp -r ./dist/lf/browser/* $out/html/
   '';
 }
 
