@@ -15,9 +15,9 @@ main reactor {
         telemetry.yaw = ((double)(rand() % 62831853071)) / 1000000000.0;
         telemetry.pitch = ((double)(rand() % 62831853071)) / 1000000000.0;
         telemetry.roll = ((double)(rand() % 62831853071)) / 1000000000.0;
-        telemetry.vel_yaw = ((double)(rand() % 6283185307100)) / 1000000000000000.0;
-        telemetry.vel_pitch = ((double)(rand() % 62831853071)) / 10000000000000.0;
-        telemetry.vel_roll = ((double)(rand() % 62831853071)) / 10000000000000.0;
+        telemetry.vel_yaw = ((double)(rand() % 6283185307100)) / 100000000000000.0;
+        telemetry.vel_pitch = ((double)(rand() % 62831853071)) / 1000000000000.0;
+        telemetry.vel_roll = ((double)(rand() % 62831853071)) / 1000000000000.0;
         telemetry.time = time(NULL);
 
         TcpMessage message;

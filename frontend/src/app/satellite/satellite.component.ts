@@ -18,6 +18,8 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   @ViewChild('canvas')
   private canvasRef!: ElementRef;
 
+  @Input() public frameRate: number = 0.04;
+
   @Input() public rotationSpeedX: number = 0.0;
   @Input() public rotationSpeedY: number = 0.0;
   @Input() public rotationSpeedZ: number = 0.0;
@@ -31,6 +33,9 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   @Input('farClipping') public farClippingPlane: number = 1000;
 
   private camera!: THREE.PerspectiveCamera;
+
+  private clock!: THREE.Clock;
+  private startTime!: number;
 
   private get canvas(): HTMLCanvasElement {
     return this.canvasRef.nativeElement;
@@ -95,16 +100,24 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
       this.satellite.rotation.x = receivedMessage.yaw;
       this.satellite.rotation.y = receivedMessage.pitch;
       this.satellite.rotation.z = receivedMessage.roll;
-      this.rotationSpeedX = receivedMessage.vel_yaw;
-      this.rotationSpeedY = receivedMessage.vel_pitch;
-      this.rotationSpeedZ = receivedMessage.vel_roll;
+      this.rotationSpeedX = receivedMessage.vel_yaw * this.frameRate;
+      this.rotationSpeedY = receivedMessage.vel_pitch * this.frameRate;
+      this.rotationSpeedZ = receivedMessage.vel_roll * this.frameRate;
     });
+    this.clock = new THREE.Clock();
+    this.clock.start();
+    this.startTime = this.clock.getElapsedTime();
 
     let component: SatelliteComponent = this;
     (function render() {
       requestAnimationFrame(render);
-      component.animateCube();
-      component.renderer.render(component.scene, component.camera);
+      let currentTime = component.clock.getElapsedTime();
+      console.log(currentTime, component.startTime, currentTime - component.startTime);
+      if (currentTime - component.startTime > component.frameRate) {
+        component.animateCube();
+        component.renderer.render(component.scene, component.camera);
+        component.startTime += component.frameRate;
+      }
     }());
   }
 
