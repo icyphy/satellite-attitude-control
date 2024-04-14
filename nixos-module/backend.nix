@@ -27,7 +27,7 @@ in
           wantedBy = [ "multi-user.target" ];
 
           script = ''
-            exec ${pkgs.backend}/bin/backend&
+            exec ${pkgs.lf-backend}/bin/backend&
           '';
 
           serviceConfig = {

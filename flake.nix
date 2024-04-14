@@ -17,15 +17,15 @@
         in
         rec {
           checks = packages;
-          packages.backend = pkgs.callPackage ./pkgs/backend.nix { };
-          packages.frontend = pkgs.callPackage ./pkgs/frontend.nix {
+          packages.lf-backend = pkgs.callPackage ./pkgs/backend.nix { };
+          packages.lf-frontend = pkgs.callPackage ./pkgs/frontend.nix {
             mkPnpmPackage = pnpm2nix.packages."${system}".mkPnpmPackage;
           };
         })) // {
 
       overlays.default = (final: prev: {
-        website = self.packages."${prev.system}".website;
-        backend = self.packages."${prev.system}".backend;
+        lf-website = self.packages."${prev.system}".lf-website;
+        lf-backend = self.packages."${prev.system}".lf-backend;
       });
 
       nixosModules = rec {
