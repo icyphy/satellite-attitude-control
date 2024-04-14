@@ -18,9 +18,9 @@ export class CubeComponent implements OnInit, OnDestroy, AfterViewInit{
   @ViewChild('canvas')
   private canvasRef!: ElementRef;
 
-  @Input() public rotationSpeedX: number = 0.0;
-  @Input() public rotationSpeedY: number = 0.0;
-  @Input() public rotationSpeedZ: number = 0.0;
+  @Input() public rotationSpeedX: number = 0.1;
+  @Input() public rotationSpeedY: number = -0.1;
+  @Input() public rotationSpeedZ: number = 0.2;
 
   @Input() public size: number = 20.0;
   @Input() public texture: string = "/assets/texture.jpg";

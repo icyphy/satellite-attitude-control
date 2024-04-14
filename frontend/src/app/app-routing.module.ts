@@ -4,7 +4,7 @@ import {CubeComponent} from "./cube/cube.component";
 import {routes as cubeRoutes} from "./cube/cube.routes";
 
 export const routes: Routes = [
-  {path: 'cube', children: cubeRoutes}
+  {path: 'satellite', children: cubeRoutes}
 ];
 
 @NgModule({
