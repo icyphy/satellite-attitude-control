@@ -21,7 +21,7 @@ preamble {=
 #endif //PREAMBLE_TCP_SOCKET_CLIENT
 =}
 
-reactor TcpSocketClient(check_frequency: time = 1ms, host: {=const char*=} = "::1",  port: short = 50000) {
+reactor TcpSocketClient(check_frequency: time = 100 ms, host: {=const char*=} = "::1",  port: short = 50000) {
     timer t(0, check_frequency)
     state fd: int
     input to_ground: TcpMessage

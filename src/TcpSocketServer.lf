@@ -22,7 +22,7 @@ preamble {=
 #endif //PREAMBLE_TCP_SOCKET_SERVER
 =}
 
-reactor TcpSocketServer(check_frequency: time = 100ms, host: {=const char*=} = "::1",  port: short = 50000) {
+reactor TcpSocketServer(check_frequency: time = 100 ms, host: {=const char*=} = "::1",  port: short = 50000) {
     timer accept(0, check_frequency)
     timer recv(100ms, check_frequency)
     state fd: int

@@ -17,11 +17,43 @@ preamble {=
 reactor Process {
   input from_reactionWheel: MessageFromClient
   input telemetry_in: Telemetry
+  input from_ground: TcpMessage
   output telemetry_out: Telemetry
   output to_ground: TcpMessage
+  output to_satellite: TcpMessage
   state latest: Telemetry
   timer send_to_ground(0, 1 sec)
 
+  reaction(send_to_ground) -> to_ground {=
+    TcpMessage message;
+    message.message = malloc(sizeof(Telemetry));
+    memcpy(message.message, &self->latest, sizeof(Telemetry));
+    message.size = sizeof(Telemetry);
+    message.descriptor = 0;
+    
+    lf_print("send telemetry");
+    lf_set(to_ground, message);
+  =}
+
+  reaction(from_ground) -> to_satellite {=
+    MessageFromClient message = from_ground->value;
+    TcpMessage value = message.message;
+
+    switch (value.descriptor) {
+      case 0:
+        assert(value.size >= sizeof(Command));
+        Command command_struct;
+        memcpy(&command_struct, value.message, sizeof(Command));
+
+        lf_set(to_satellite, command_struct);
+        break;
+      default:
+        lf_print("unknown descriptor received %d", value.descriptor);
+    }
+
+    free(value.message);
+  =}
+  
   reaction (from_reactionWheel) -> telemetry_out {=
     MessageFromClient message = from_reactionWheel->value;
     TcpMessage value = message.message;
@@ -53,17 +85,6 @@ reactor Process {
     lf_print("[Telemetry] yaw: %lf, vel_yaw: %f, pitch: %lf, vel_pitch: %f, roll: %lf, vel_roll: %f, time: %lld", 
       self->latest.yaw, self->latest.vel_yaw, self->latest.pitch, self->latest.vel_pitch, self->latest.roll, self->latest.vel_roll, self->latest.time);
   =}
-
-  reaction(send_to_ground) -> to_ground {=
-    TcpMessage message;
-    message.message = malloc(sizeof(Telemetry));
-    memcpy(message.message, &self->latest, sizeof(Telemetry));
-    message.size = sizeof(Telemetry);
-    message.descriptor = 0;
-    
-    lf_print("send telemetry");
-    lf_set(to_ground, message);
-  =}
 }
 
 
@@ -77,4 +98,6 @@ main reactor {
   process.telemetry_out -> process.telemetry_in
   receiveFromReactionWheel.from_satelitte -> process.from_reactionWheel
   process.to_ground -> sendToGroundstation.to_ground
+  process.to_satellite -> receiveFromReactionWheel.to_satellite
+  sendToGroundstation.from_ground -> process.from_ground
 }
