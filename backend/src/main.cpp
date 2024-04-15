@@ -158,14 +158,15 @@ auto convert_telemetry_to_json(Telemetry telemetry) -> std::string {
     return std::string(message, size);
 }
 
-auto command_to_tcp_frame(Command command) -> TcpMessage  {
+template<class T>
+auto command_to_tcp_frame(T* command) -> TcpMessage  {
     TcpMessage message;
 
-    message.size = sizeof(Command);
-    message.message = static_cast<char *>(malloc(sizeof(Command)));
+    message.size = sizeof(T);
+    message.message = static_cast<char *>(malloc(sizeof(T)));
     message.descriptor = 0;
 
-    std::memcpy(message.message, &command, sizeof(Command));
+    std::memcpy(message.message, command, sizeof(T));
 
     return message;
 }
@@ -196,7 +197,15 @@ int main() {
             auto command = websocket.get_command();
 
             if (command.has_value()) {
-                server.send(command_to_tcp_frame(command.value()));
+                auto command_value = command.value();
+                if (command->descriptor == 0) {
+                    std::cout << "Send Orientate Command to Satellite" << std::endl;
+                    server.send(command_to_tcp_frame<SetPositionCommand>(command_value.set_position));
+                }
+                if (command->descriptor == 1) {
+                    std::cout << "Send Request Data Command to Satellite" << std::endl;
+                    server.send(command_to_tcp_frame<RequestDataCommand>(command_value.request_data));
+                }
             }
         }
     }

@@ -5,8 +5,8 @@ target C {
 import TcpSocketClient from "./TcpSocketClient.lf";
 
 main reactor {
-    groundstation = new TcpSocketClient(host="88.198.121.105", port=31812);
-    //groundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
+    //groundstation = new TcpSocketClient(host="88.198.121.105", port=31812);
+    groundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
 
     timer t(2s, 1s);
 
@@ -29,6 +29,10 @@ main reactor {
         
         lf_print("send telemetry");
         lf_set(groundstation.to_ground, message);
+    =}
+
+    reaction(groundstation.from_ground) {=
+        lf_print("received a message from groundstation");
     =}
 
 }

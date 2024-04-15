@@ -9,9 +9,15 @@ export interface Telemetry {
   time: number
 }
 
-export interface Command {
+export interface CommandSetOrientation {
+  descriptor: number,
   yaw: number,
   pitch: number,
   roll: number,
   time: number
+}
+
+export interface CommandFetchValue {
+  descriptor: number,
+  amount: number
 }

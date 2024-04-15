@@ -1,7 +1,7 @@
 import {Component, AfterViewInit, ElementRef, Input, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import * as THREE from "three";
 import {WebSocketService} from "../services/websocket.service";
-import {Command, Telemetry} from "../services/telemetry.domain";
+import {CommandFetchValue, CommandSetOrientation, Telemetry} from "../services/telemetry.domain";
 import URDFLoader, {URDFRobot} from 'urdf-loader';
 import {LoadingManager} from "three";
 import {ButtonComponent, TextFieldComponent} from "@feel/form";
@@ -48,7 +48,6 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   private zposRef!: ElementRef;
   @ViewChild('time')
   private timeRef!: ElementRef;
-
 
 
   @Input() public framePeriod: number = 0.025;
@@ -150,7 +149,7 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
 
     this.websocketService
       .sub()
-      .subscribe((receivedMessage: Telemetry | Command) => {
+      .subscribe((receivedMessage: Telemetry | CommandFetchValue | CommandSetOrientation) => {
       if(!("vel_yaw" in receivedMessage) || !("vel_pitch" in receivedMessage) || !("vel_roll" in receivedMessage)) {
         return;
       }
@@ -201,11 +200,20 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
     const form_data = this.form.getRawValue();
 
     this.websocketService.send({
+      descriptor: 0,
       yaw: form_data.yaw,
       pitch: form_data.pitch,
       roll: form_data.roll,
       time: form_data.time
     });
+  }
+
+  public fetchHistory() {
+    this.websocketService.send({
+      descriptor: 1,
+      amount: 100,
+    });
+
   }
 
   ngAfterViewInit(): void {

@@ -104,19 +104,35 @@ void BroadcastServer::process_messages() noexcept {
             std::cout << "received: " << message << std::endl;
             auto result = nlohmann::json::parse(message);
 
-            if (result.contains("yaw") && result.contains("pitch") && result.contains("roll")) {
-                Command command;
-                command.yaw = result["yaw"];
-                command.pitch = result["pitch"];
-                command.roll = result["roll"];
-                command.time = result["time"];
 
-                std::lock_guard<std::mutex> lock(command_lock_);
-                received_commands_.insert(received_commands_.begin(), command);
-            } else {
-                std::cout << "user didn't specify all necessary values" << std::endl;
+            if (result.contains("descriptor")) {
+                if (result["descriptor"] == 0 && result.contains("yaw") && result.contains("pitch") && result.contains("roll")) {
+                    auto* command_body = new SetPositionCommand[1];
+                    command_body->yaw = result["yaw"];
+                    command_body->pitch = result["pitch"];
+                    command_body->roll = result["roll"];
+                    command_body->time = result["time"];
+
+                    Command command;
+                    command.descriptor = 0;
+                    command.set_position = command_body;
+
+                    std::lock_guard<std::mutex> command_lock(command_lock_);
+                    received_commands_.insert(received_commands_.begin(), command);
+                } else if (result["descriptor"] == 1) {
+                    auto* command_body = new RequestDataCommand[1];
+                    command_body->amount = result["amount"];
+
+                    Command command;
+                    command.descriptor = 1;
+                    command.request_data = command_body;
+
+                    std::lock_guard<std::mutex> command_lock(command_lock_);
+                    received_commands_.insert(received_commands_.begin(), command);
+                }else {
+                    std::cout << "user didn't specify all necessary values" << std::endl;
+                }
             }
-
         } else {
             // undefined.
         }
@@ -141,6 +157,7 @@ void BroadcastServer::kill() noexcept {
 
 auto BroadcastServer::get_command() -> std::optional<Command> {
     std::lock_guard<std::mutex> lock(command_lock_);
+    std::cout << "command queue:" << received_commands_.size() << std::endl;
 
     if (received_commands_.empty()) {
         return std::nullopt;

@@ -36,11 +36,22 @@ typedef struct {
     double pitch;
     double roll;
     unsigned long time;
-} Command;
+} SetPositionCommand;
+
+typedef struct {
+    unsigned long amount;
+} RequestDataCommand;
 
 typedef struct {
     int client;
     TcpMessage message;
 } MessageFromClient;
+
+class Command {
+public:
+    uint32_t descriptor = 0;
+    RequestDataCommand* request_data = nullptr;
+    SetPositionCommand*  set_position = nullptr;
+};
 
 #endif //WEBSOCKET_PROXY_COMMON_H

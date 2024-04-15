@@ -13,6 +13,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <optional>
+#include <variant>
 
 #include "common.h"
 
