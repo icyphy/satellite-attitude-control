@@ -1,4 +1,4 @@
-{ stdenv, lib, pkg-config, cmake, openssl, websocketpp, asio }:
+{ stdenv, lib, pkg-config, cmake, openssl, websocketpp, asio, nlohmann_json }:
 stdenv.mkDerivation {
   pname = "backend";
   version = "0.1.0";
@@ -19,5 +19,5 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [ pkg-config cmake ];
 
-  buildInputs = [ openssl websocketpp asio ];
+  buildInputs = [ openssl websocketpp asio nlohmann_json ];
 }

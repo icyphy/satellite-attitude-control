@@ -1,18 +1,33 @@
 import {Component, AfterViewInit, ElementRef, Input, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import * as THREE from "three";
 import {WebSocketService} from "../services/websocket.service";
-import {Telemetry} from "../services/telemetry.domain";
+import {Command, Telemetry} from "../services/telemetry.domain";
 import URDFLoader, {URDFRobot} from 'urdf-loader';
 import {LoadingManager} from "three";
-import {error} from "@angular/compiler-cli/src/transformers/util";
+import {ButtonComponent, TextFieldComponent} from "@feel/form";
+import {FormControl, FormGroup, ReactiveFormsModule, Validators} from "@angular/forms";
+import {filter} from "rxjs";
 
 @Component({
   selector: 'app-cube',
   standalone: true,
   templateUrl: './satellite.component.html',
+  imports: [
+    TextFieldComponent,
+    ButtonComponent,
+    ReactiveFormsModule,
+  ],
   styleUrl: './satellite.component.scss'
 })
 export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
+
+  protected readonly form : FormGroup = new FormGroup({
+    yaw: new FormControl<number | null>(null, [Validators.required]),
+    pitch: new FormControl<number | null>(null, [Validators.required]),
+    roll: new FormControl<number | null>(null, [Validators.required]),
+    time: new FormControl<number | null>(null, [Validators.required])
+  })
+
   constructor(private websocketService: WebSocketService) { }
 
   @ViewChild('canvas')
@@ -33,6 +48,8 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   private zposRef!: ElementRef;
   @ViewChild('time')
   private timeRef!: ElementRef;
+
+
 
   @Input() public framePeriod: number = 0.025;
 
@@ -131,7 +148,14 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
     this.renderer.setPixelRatio(devicePixelRatio);
     this.renderer.setSize(this.canvas.clientWidth, this.canvas.clientHeight);
 
-    this.websocketService.sub().subscribe((receivedMessage: Telemetry) => {
+    this.websocketService
+      .sub()
+      .subscribe((receivedMessage: Telemetry | Command) => {
+      if(!("vel_yaw" in receivedMessage) || !("vel_pitch" in receivedMessage) || !("vel_roll" in receivedMessage)) {
+        return;
+      }
+
+
       let animation: [[number, number, number]] = [[this.satellite.rotation.x, this.satellite.rotation.y, this.satellite.rotation.z]];
       let current_x = this.satellite.rotation.x;
       let current_y = this.satellite.rotation.y;
@@ -152,13 +176,6 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
       this.yposRef.nativeElement.innerText = receivedMessage.pitch;
       this.zposRef.nativeElement.innerText = receivedMessage.roll;
       this.timeRef.nativeElement.innerText = receivedMessage.time;
-
-      //this.satellite.rotation.x = receivedMessage.yaw;
-      //this.satellite.rotation.y = receivedMessage.pitch;
-      //this.satellite.rotation.z = receivedMessage.roll;
-      //this.rotationDeltaX = receivedMessage.vel_yaw * this.framePeriod;
-      //this.rotationDeltaY = receivedMessage.vel_pitch * this.framePeriod;
-      //this.rotationDeltaZ = receivedMessage.vel_roll * this.framePeriod;
     });
     this.clock = new THREE.Clock();
     this.clock.start();
@@ -175,6 +192,20 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
         component.startTime += component.framePeriod;
       }
     }());
+  }
+  public submit() {
+    if(!this.form.valid) {
+      return;
+    }
+
+    const form_data = this.form.getRawValue();
+
+    this.websocketService.send({
+      yaw: form_data.yaw,
+      pitch: form_data.pitch,
+      roll: form_data.roll,
+      time: form_data.time
+    });
   }
 
   ngAfterViewInit(): void {

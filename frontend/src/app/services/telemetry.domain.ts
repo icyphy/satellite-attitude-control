@@ -8,3 +8,10 @@ export interface Telemetry {
   vel_roll: number,
   time: number
 }
+
+export interface Command {
+  yaw: number,
+  pitch: number,
+  roll: number,
+  time: number
+}

@@ -9,6 +9,8 @@
 #include <iostream>
 #include <algorithm>
 
+#include <nlohmann/json.hpp>
+
 BroadcastServer::BroadcastServer() noexcept {
     // setting the state of the broadcast_server to active
     kill_.store(false);
@@ -100,6 +102,21 @@ void BroadcastServer::process_messages() noexcept {
         } else if (a.type == MESSAGE) {
             std::string message = a.msg->get_payload();
             std::cout << "received: " << message << std::endl;
+            auto result = nlohmann::json::parse(message);
+
+            if (result.contains("yaw") && result.contains("pitch") && result.contains("roll")) {
+                Command command;
+                command.yaw = result["yaw"];
+                command.pitch = result["pitch"];
+                command.roll = result["roll"];
+                command.time = result["time"];
+
+                std::lock_guard<std::mutex> lock(command_lock_);
+                received_commands_.insert(received_commands_.begin(), command);
+            } else {
+                std::cout << "user didn't specify all necessary values" << std::endl;
+            }
+
         } else {
             // undefined.
         }
@@ -120,6 +137,18 @@ void BroadcastServer::send_message(const std::string &message) noexcept {
 
 void BroadcastServer::kill() noexcept {
     kill_.store(true);
+}
+
+auto BroadcastServer::get_command() -> std::optional<Command> {
+    std::lock_guard<std::mutex> lock(command_lock_);
+
+    if (received_commands_.empty()) {
+        return std::nullopt;
+    } else {
+        auto value = *received_commands_.end();
+        received_commands_.pop_back();
+        return value;
+    }
 }
 
 

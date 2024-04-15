@@ -119,6 +119,12 @@ public:
 
         return std::optional<TcpMessage>{message};
     }
+
+    void send(TcpMessage message) const {
+        write(current_client_, &message.size, sizeof(uint32_t));
+        write(current_client_, &message.descriptor, sizeof(uint32_t));
+        write(current_client_, message.message, message.size);
+    }
 };
 
 auto convert_to_telemetry(TcpMessage message) -> Telemetry  {
@@ -128,7 +134,7 @@ auto convert_to_telemetry(TcpMessage message) -> Telemetry  {
         std::cerr << "messages do not fit size:" << message.size << "/" << sizeof(telemetry) << std::endl;
     }
 
-    memcpy(&telemetry, message.message, sizeof(Telemetry));
+    std::memcpy(&telemetry, message.message, sizeof(Telemetry));
     return telemetry;
 }
 
@@ -150,6 +156,18 @@ auto convert_telemetry_to_json(Telemetry telemetry) -> std::string {
     std::cout << "json: " << message << std::endl;
 
     return std::string(message, size);
+}
+
+auto command_to_tcp_frame(Command command) -> TcpMessage  {
+    TcpMessage message;
+
+    message.size = sizeof(Command);
+    message.message = static_cast<char *>(malloc(sizeof(Command)));
+    message.descriptor = 0;
+
+    std::memcpy(message.message, &command, sizeof(Command));
+
+    return message;
 }
 
 int main() {
@@ -174,6 +192,12 @@ int main() {
             Telemetry telemetry = convert_to_telemetry(message.value());
             std::string json_string = convert_telemetry_to_json(telemetry);
             websocket.send_message(json_string);
+
+            auto command = websocket.get_command();
+
+            if (command.has_value()) {
+                server.send(command_to_tcp_frame(command.value()));
+            }
         }
     }
 }

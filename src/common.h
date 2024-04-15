@@ -38,5 +38,11 @@ typedef struct {
     TcpMessage message;
 } MessageFromClient;
 
+typedef struct {
+    double yaw;
+    double pitch;
+    double roll;
+    unsigned long time;
+} Command;
 
 #endif //COMMON_H

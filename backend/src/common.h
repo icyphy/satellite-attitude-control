@@ -32,6 +32,13 @@ typedef struct {
 } Telemetry;
 
 typedef struct {
+    double yaw;
+    double pitch;
+    double roll;
+    unsigned long time;
+} Command;
+
+typedef struct {
     int client;
     TcpMessage message;
 } MessageFromClient;

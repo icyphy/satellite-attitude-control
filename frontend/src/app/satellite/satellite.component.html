@@ -33,4 +33,21 @@
       </div>
     </div>
   </div>
+  <div>
+    <form [formGroup]="form" (submit)="submit()">
+      <div class="element">
+        <feel-text-field formControlName="yaw" label="Yaw:" type="number"></feel-text-field>
+      </div>
+      <div class="element">
+        <feel-text-field formControlName="pitch" label="Pitch:" type="number"></feel-text-field>
+      </div>
+      <div class="element">
+        <feel-text-field formControlName="roll" label="Roll:" type="number"></feel-text-field>
+      </div>
+      <div class="element">
+        <feel-text-field formControlName="time" label="Time:" type="number"></feel-text-field>
+      </div>
+      <feel-button label="Send Command"></feel-button>
+    </form>
+  </div>
 </div>

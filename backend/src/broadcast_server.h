@@ -12,10 +12,14 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <optional>
+
+#include "common.h"
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
 using websocketpp::connection_hdl;
+//using websocketpp::lib::bind;
 
 using websocketpp::lib::thread;
 using websocketpp::lib::mutex;
@@ -44,9 +48,13 @@ private:
     server server_;
     std::vector<connection_hdl> connections_;
 
-    std::queue<action> actions_;
+    std::queue<action> actions_{};
     std::atomic<bool> kill_{};
 
+
+    std::vector<Command> received_commands_{};
+
+    std::mutex command_lock_;
     std::mutex action_lock_;
     std::mutex connection_lock_;
     std::condition_variable action_condition_;
@@ -62,6 +70,7 @@ public:
     void process_messages() noexcept;
     void send_message(const std::string& message) noexcept;
     void kill() noexcept;
+    auto get_command() -> std::optional<Command>;
 };
 
 #endif //FUNNEL_BROADCAST_SERVER_HPP

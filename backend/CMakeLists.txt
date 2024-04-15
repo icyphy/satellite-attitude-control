@@ -12,6 +12,7 @@ include(FindPkgConfig)
 include_directories(/usr/local/include)
 
 find_package (Threads REQUIRED)
+find_package(nlohmann_json 3.11 REQUIRED)
 #find_package(gRPC CONFIG REQUIRED)
 #find_package(prometheus-cpp CONFIG REQUIRED)
 #find_package(Protobuf REQUIRED)
@@ -31,4 +32,4 @@ add_executable(backend
         src/broadcast_server.cpp
         src/broadcast_server.h)
 
-target_link_libraries(backend PUBLIC Threads::Threads)
+target_link_libraries(backend PUBLIC Threads::Threads nlohmann_json::nlohmann_json)
