@@ -1,0 +1,296 @@
+target C {
+    files: ["lzav/lzav.h"],
+    scheduler: {
+        type: STATIC,
+        static-scheduler: LOAD_BALANCED,
+    },
+    fast: true,
+    build-type: Debug,
+    workers: 4,
+    timeout: 2 nsec, // FIXME: Need lf_request_stop().
+}
+
+reactor Director {
+
+    // output filename: char*
+    preamble {=
+    #include <dirent.h>
+
+    #define NUM_FILE_MAX 100
+    #define STRING_LEN_MAX 10
+
+    void list_files(const char *path, char** filenames, int* num_files) {
+        DIR *dir = opendir(path);
+        if (dir == NULL) {
+            perror("Failed to open directory");
+            exit(EXIT_FAILURE);
+        }
+
+        struct dirent *entry;
+        while ((entry = readdir(dir)) != NULL) {
+            // Skip the current and parent directory entries
+            if (strcmp(entry->d_name, ".") == 0 
+                || strcmp(entry->d_name, "..") == 0) {
+                continue;
+            }
+            // printf("%s\n", entry->d_name);
+            filenames[*num_files] = malloc(sizeof(char) * STRING_LEN_MAX);
+            strcpy(filenames[*num_files], entry->d_name);
+            (*num_files)++;
+        }
+
+        closedir(dir);
+    }
+    =}
+
+    state filenames: {=char**=}
+    state num_files: int = 0
+    state dir: char* = "../data/"
+    state count: int = 0
+
+    input done_in: bool
+    output done_out: bool
+
+    input start_in: bool
+    output start_out: bool
+
+    input done_c1: bool
+    input done_c2: bool
+    input done_c3: bool
+    
+    output begin_c1: char*
+    output begin_c2: char*
+    output begin_c3: char*
+
+    reaction(startup) -> start_out {=
+        // Allocate dynamic memory for the pointer.
+        self->filenames = malloc(NUM_FILE_MAX * sizeof(char*));
+        // char *dir = "../data";
+        list_files(self->dir, self->filenames, &self->num_files);
+        printf("=====\n");
+        for (int i = 0; i < self->num_files; i++) {
+            printf("%s\n", self->filenames[i]);
+        }
+        lf_set_present(start_out);
+    =}
+
+    reaction(done_c1, done_c2, done_c3) -> start_out, done_out {=
+        if (self->count >= self->num_files) {
+            lf_set_present(done_out);
+        } else {
+            lf_set_present(start_out);
+        }
+    =}
+
+    reaction(start_in) -> begin_c1, begin_c2, begin_c3 {=
+        if (self->count < self->num_files) {
+            lf_set(begin_c1, self->filenames[self->count]);
+            self->count++;
+        }
+        if (self->count < self->num_files) {
+            lf_set(begin_c2, self->filenames[self->count]);
+            self->count++;
+        }
+        if (self->count < self->num_files) {
+            lf_set(begin_c3, self->filenames[self->count]);
+            self->count++;
+        }
+    =}
+
+    reaction(done_in) {=
+        for (int i = 0; i < self->num_files; i++) {
+            free(self->filenames[i]); // Free individual string.
+        }
+        free(self->filenames); // Free pointer array.
+        printf("All pointers freed.\n");
+    =}
+}
+
+reactor Compresser {
+    preamble {=
+    #include "lzav.h"
+
+    char* read_file_into_buffer(const char* directory, const char* filename, size_t* size) {
+        // Construct the full path
+        char full_path[1024];  // Adjust size as necessary
+        if (directory[strlen(directory) - 1] == '/') {
+            snprintf(full_path, sizeof(full_path), "%s%s", directory, filename);
+        } else {
+            snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+        }
+
+        FILE* file = fopen(full_path, "rb");
+        if (!file) {
+            perror("File opening failed");
+            return NULL;
+        }
+
+        if (fseek(file, 0, SEEK_END) != 0) {
+            perror("Fseek failed");
+            fclose(file);
+            return NULL;
+        }
+
+        long filesize = ftell(file);
+        if (filesize == -1) {
+            perror("Ftell failed");
+            fclose(file);
+            return NULL;
+        }
+
+        rewind(file);
+
+        char* buffer = (char*)malloc(filesize + 1);
+        if (!buffer) {
+            perror("Memory allocation failed");
+            fclose(file);
+            return NULL;
+        }
+
+        size_t num_read = fread(buffer, 1, filesize, file);
+        if (num_read < filesize) {
+            if (ferror(file)) {
+                perror("Fread failed");
+                free(buffer);
+                fclose(file);
+                return NULL;
+            }
+        }
+
+        buffer[num_read] = '\0';
+
+        if (size != NULL) {
+            *size = num_read;
+        }
+
+        fclose(file);
+        return buffer;
+    }
+
+    int write_buffer_to_file(const char* directory, const char* filename, const char* data, size_t size) {
+        // Construct the full path
+        char full_path[1024];  // Adjust size as necessary
+        if (directory[strlen(directory) - 1] == '/') {
+            snprintf(full_path, sizeof(full_path), "%s%s", directory, filename);
+        } else {
+            snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+        }
+        FILE* file = fopen(full_path, "wb");
+        if (!file) {
+            perror("Failed to open file for writing");
+            return -1;
+        }
+
+        if (fwrite(data, 1, size, file) < size) {
+            perror("Failed to write full data to file");
+            fclose(file);
+            return -1;
+        }
+
+        fclose(file);
+        return 0;
+    }
+
+    char* prepend_compressed(const char* original) {
+        const char* prefix = "compressed_";
+        size_t total_length = strlen(prefix) + strlen(original) + 1;  // +1 for null terminator
+
+        char* new_string = malloc(total_length);
+        if (new_string == NULL) {
+            perror("Failed to allocate memory");
+            return NULL;
+        }
+
+        // Copy the prefix to the new string
+        strcpy(new_string, prefix);
+
+        // Append the original string
+        strcat(new_string, original);
+
+        return new_string;
+    }
+    =}
+
+    state dir: char* = "../data/"
+    input filename: char*
+    output done: bool
+    
+    // A simple test
+    /*
+    reaction(startup) {=
+        size_t src_len = sizeof(char) * 10;
+        char *src_buf = (char*) malloc(src_len);
+        strcpy(src_buf, "hello!");
+
+        // Compress
+        int max_len = lzav_compress_bound( src_len );
+        void* comp_buf = malloc( max_len );
+        int comp_len = lzav_compress_default( src_buf, comp_buf, src_len, max_len );
+
+        if( comp_len == 0 && src_len != 0 )
+        {
+            // Error handling.
+        }
+
+        // Decompress
+        void* decomp_buf = malloc( src_len );
+        int l = lzav_decompress( comp_buf, decomp_buf, comp_len, src_len );
+
+        if( l < 0 )
+        {
+            // Error handling.
+        }
+
+        printf("Decompressed string: %s\n", (char*)decomp_buf);
+        
+        free(src_buf);
+        free(comp_buf);
+        free(decomp_buf);
+    =}
+    */
+
+    reaction(filename) -> done {=
+        printf("Received task %s\n", filename->value);
+        
+        // Load file
+        size_t size;
+        char* content = read_file_into_buffer(self->dir, filename->value, &size);
+        if (content == NULL) {
+            // Error handling.
+        }
+
+        // Compress
+        int max_len = lzav_compress_bound_hi( size );
+        void* comp_buf = malloc( max_len );
+        int comp_len = lzav_compress_hi( content, comp_buf, size, max_len );
+        if( comp_len == 0 && size != 0 )
+        {
+            // Error handling.
+            printf("Compression: something is wrong.\n");
+        }
+
+        // Write compressed file
+        char *new_filename = prepend_compressed(filename->value);
+        if (write_buffer_to_file(self->dir, new_filename, comp_buf, comp_len) == 0) {
+            // Error handling.
+        }
+        free(content);
+        free(comp_buf);
+        lf_set_present(done);
+    =}
+}
+
+main reactor {
+    d = new Director()
+    c1 = new Compresser()
+    c2 = new Compresser()
+    c3 = new Compresser()
+    d.done_out -> d.done_in
+    d.start_out -> d.start_in
+    d.begin_c1 -> c1.filename
+    d.begin_c2 -> c2.filename
+    d.begin_c3 -> c3.filename
+    c1.done -> d.done_c1 after 1 nsec
+    c2.done -> d.done_c2 after 1 nsec
+    c3.done -> d.done_c3 after 1 nsec
+}
