@@ -20,9 +20,44 @@ reactor Process {
   input from_ground: TcpMessage
   output telemetry_out: Telemetry
   output to_ground: TcpMessage
-  output to_satellite: TcpMessage
+  output to_satellite: MessageFromClient
   state latest: Telemetry
+  state file: FILE*
+  state lines_written: int = 0
   timer send_to_ground(0, 1 sec)
+
+  preamble {=
+    // int mkdir_p(const char *path, mode_t mode) {
+    //   char tmp[256];
+    //   char *p = NULL;
+    //   size_t len;
+
+    //   snprintf(tmp, sizeof(tmp), "%s", path);
+    //   len = strlen(tmp);
+    //   if (tmp[len - 1] == '/') {
+    //     tmp[len - 1] = 0;
+    //   }
+      
+    //   for (p = tmp + 1; *p; p++) {
+    //     if (*p == '/') {
+    //       *p = 0;
+    //       if (mkdir(tmp, mode) != 0) {
+    //         if (errno != EEXIST) {
+    //           return -1;
+    //         }
+    //       }
+    //       *p = '/';
+    //     }
+    //   }
+      
+    //   if (mkdir(tmp, mode) != 0) {
+    //     if (errno != EEXIST) {
+    //       return -1;
+    //     }
+    //   }
+    //   return 0;
+    // }
+  =}
 
   reaction(send_to_ground) -> to_ground {=
     TcpMessage message;
@@ -35,24 +70,26 @@ reactor Process {
     lf_set(to_ground, message);
   =}
 
-  reaction(from_ground) -> to_satellite {=
-    MessageFromClient message = from_ground->value;
-    TcpMessage value = message.message;
+  // Relay command message from ground station to the reaction wheel.
+  // FIXME: Incomplete.
+  // reaction(from_ground) -> to_satellite {=
+  //   TcpMessage value = from_ground->value;
 
-    switch (value.descriptor) {
-      case 0:
-        assert(value.size >= sizeof(Command));
-        Command command_struct;
-        memcpy(&command_struct, value.message, sizeof(Command));
+  //   switch (value.descriptor) {
+  //     // Attitude update command
+  //     case 0:
+  //       assert(value.size >= sizeof(Command));
+  //       Command command_struct;
+  //       memcpy(&command_struct, value.message, sizeof(Command));
 
-        lf_set(to_satellite, command_struct);
-        break;
-      default:
-        lf_print("unknown descriptor received %d", value.descriptor);
-    }
+  //       lf_set(to_satellite, command_struct);
+  //       break;
+  //     default:
+  //       lf_print("unknown descriptor received %d", value.descriptor);
+  //   }
 
-    free(value.message);
-  =}
+  //   free(value.message);
+  // =}
   
   reaction (from_reactionWheel) -> telemetry_out {=
     MessageFromClient message = from_reactionWheel->value;
@@ -84,20 +121,24 @@ reactor Process {
 
     lf_print("[Telemetry] yaw: %lf, vel_yaw: %f, pitch: %lf, vel_pitch: %f, roll: %lf, vel_roll: %f, time: %lld", 
       self->latest.yaw, self->latest.vel_yaw, self->latest.pitch, self->latest.vel_pitch, self->latest.roll, self->latest.vel_roll, self->latest.time);
+
+    // Write to file
+
   =}
 }
 
 
 main reactor {
   process = new Process()
-  receiveFromReactionWheel = new TcpSocketServer(host="127.0.0.1", port=31811);
-  // receiveFromReactionWheel = new TcpSocketServer(host="192.168.123.111", port=31811);
-  sendToGroundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
+  // receiveFromReactionWheel = new TcpSocketServer(host="127.0.0.1", port=31811);
+  receiveFromReactionWheel = new TcpSocketServer(host="192.168.123.111", port=31811);
+  // sendToGroundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
   // sendToGroundstation = new TcpSocketClient(host="88.198.121.105", port=31812); // Tassilo's server
+  sendToGroundstation = new TcpSocketClient(host="192.168.123.125", port=31812);
   
   process.telemetry_out -> process.telemetry_in
   receiveFromReactionWheel.from_satelitte -> process.from_reactionWheel
   process.to_ground -> sendToGroundstation.to_ground
-  process.to_satellite -> receiveFromReactionWheel.to_satellite
+  // process.to_satellite -> receiveFromReactionWheel.to_satellite
   sendToGroundstation.from_ground -> process.from_ground
 }

@@ -2,12 +2,18 @@ target C {
     files: ["lzav/lzav.h"],
     scheduler: {
         type: STATIC,
-        static-scheduler: LOAD_BALANCED,
+        static-scheduler: MOCASIN,
+        mocasin-mapping: [
+            "./mappings/mappings-opt-0.csv",
+            "./mappings/mappings-subopt-1.csv",
+            "./mappings/mappings-opt-2.csv",
+        ],
     },
     fast: true,
     build-type: Debug,
     workers: 4,
-    timeout: 2 nsec, // FIXME: Need lf_request_stop().
+    timeout: 5 nsec, // FIXME: Need lf_request_stop().
+    // tracing: true, // For collecting reaction WCETs
 }
 
 reactor Director {
@@ -62,6 +68,7 @@ reactor Director {
     output begin_c2: char*
     output begin_c3: char*
 
+    @wcet("923959 nsec, 817413 nsec")
     reaction(startup) -> start_out {=
         // Allocate dynamic memory for the pointer.
         self->filenames = malloc(NUM_FILE_MAX * sizeof(char*));
@@ -74,6 +81,7 @@ reactor Director {
         lf_set_present(start_out);
     =}
 
+    @wcet("7797 nsec, 5294 nsec")
     reaction(done_c1, done_c2, done_c3) -> start_out, done_out {=
         if (self->count >= self->num_files) {
             lf_set_present(done_out);
@@ -82,6 +90,7 @@ reactor Director {
         }
     =}
 
+    @wcet("8966 nsec, 7295 nsec")
     reaction(start_in) -> begin_c1, begin_c2, begin_c3 {=
         if (self->count < self->num_files) {
             lf_set(begin_c1, self->filenames[self->count]);
@@ -97,6 +106,7 @@ reactor Director {
         }
     =}
 
+    @wcet("75032 nsec, 37130 nsec")
     reaction(done_in) {=
         for (int i = 0; i < self->num_files; i++) {
             free(self->filenames[i]); // Free individual string.
@@ -249,6 +259,7 @@ reactor Compresser {
     =}
     */
 
+    @wcet("5212519179 nsec, 2095696879 nsec")
     reaction(filename) -> done {=
         printf("Received task %s\n", filename->value);
         
