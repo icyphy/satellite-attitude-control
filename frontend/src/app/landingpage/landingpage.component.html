@@ -7,27 +7,76 @@
     <div class="authors">
       <div class="author">
         <b>Shaokai Lin</b>
-        <a class="typography" href="mailto:shaokai@berkeley.edu">shaokai&#64;berkeley.edu</a>
+        <a class="typography" href="mailto:shaokai@berkeley.edu"><small>shaokai&#64;berkeley.edu</small></a>
       </div>
       <div class="author">
         <b>Tassilo Tanneberger</b>
-        <a class="typography" href="mailto:tassilo.tanneberger@tu-dresden.de">tassilo.tanneberger&#64;tu-dresden.de</a>
+        <a class="typography" href="mailto:tassilo.tanneberger@tu-dresden.de"><small>tassilo.tanneberger&#64;tu-dresden.de</small></a>
       </div>
       <div class="author">
         <b>Erling Jellum</b>
-        <a class="typography" href="mailto:erling.r.jellum@ntnu.no">erling.r.jellum&#64;ntnu.no</a>
+        <a class="typography" href="mailto:erling.r.jellum@ntnu.no"><small>erling.r.jellum&#64;ntnu.no</small></a>
       </div>
       <div class="author">
         <b>Edward Lee</b>
-        <a class="typography" href="mailto:eal@berkeley.edu">eal&#64;berkeley.edu</a>
+        <a class="typography" href="mailto:eal@berkeley.edu"><small>eal&#64;berkeley.edu</small></a>
       </div>
     </div>
 
     <div class="body">
+
+      <h3>Introduction</h3>
       <p>
-        Abstract goes here!
+        Flight software is becoming increasingly complex and
+        unyielding as mission profiles and spacecraft become more sophisticated. We live
+        in an age where many full or partial mission failures are caused by
+        faulty software <a href="#NasaSat">[1]</a>. To improve the reliability and performance of
+        future space flight software, we advocate for the adoption of
+        Lingua Franca (LF), a programming model for deterministic, concurrent, and
+        real-time Cyber-Physical Systems (CPS). We also propose the use of PretVM, an execution backend for LF
+        capable of implementing verifiable real-time behavior and optimizations. We will use
+        these two concepts to develop a controller for an attitude control system.
       </p>
 
+      <h3>Background</h3>
+      <p>
+        Lingua Franca is a polyglot coordination language that offers
+        deterministic concurrency and timing semantics <a href="#Lohstroh2019">[2]</a>. With this
+        programming model, the programmer no longer has to worry about race conditions
+        and other concurrency problems and can focus on the application logic. LF also removes
+        the gap between ``model'' and ``code'' by allowing the
+        same LF code to run both in simulation and on the real hardware.
+        It's known that a subset of LF programs that are driven by timers can be compiled
+        down to quasi-static schedules that can be executed on PretVM.
+        PretVM <a href="#PretVM">[3]</a> is a register-based virtual machine built to
+        fascilitate the scheduling and timing of concurrent tasks. Its virtual
+        instruction set contains standard instructions such as <em>ADD</em> and <em>BEQ</em>
+        borrowed from RISC-V. The PretVM instruction set also includes timing
+        instructions, such as <em>DU</em> (delay until) and <em>WU</em> (wait until), which are inspired
+        by PRET Machines~ <a href="#PretVM">[3]</a>.
+        PretVM can be used as an execution backend for LF. External
+        tools, include the Edge Generation Scheduler~ <a href="#EGS">[4]</a> and Mocasin~ <a href="#mocasin">[5]</a>, can
+        be used to guide the generation of quasi-static schedules.
+      </p>
+
+      <h3>Contribution</h3>
+      <p>
+        In this presentation, we show that LF and PretVM
+        have the potential to support future space flight software by developing a
+        real-time controller for a three-axis reaction wheel system, which is used for
+        attitude control of spacecraft. LF's determinism enables us to adopt
+        test-driven development when developing the reaction wheel controller. For our
+        reaction wheel system, we identify a real-time task set and a
+        non-real-time task set. We show that, given that both sets are
+        sufficiently decoupled, the real-time tasks can be scheduled on PretVM with
+        verifiable real-time guarantees with the Edge Generation Scheduler. Similarly,
+        with Mocasin, the non-real-time tasks can be scheduled optimally w.r.t. makespan
+        and energy consumption. We further compare our implementation based on LF and
+        PretVM with a reference implementation based on the Zephyr RTOS.
+      </p>
+
+    </div>
+    <div>
       <feel-button routerLink="satellite"><b class="demo-button">Demo!</b></feel-button>
     </div>
 
@@ -41,6 +90,151 @@
       <app-card [inverseShadow]="true" backgroundImage="/assets/images/ntnu-bg.webp" link="https://ntnu.no">
         <app-icon-ntnu class="logo"></app-icon-ntnu>
       </app-card>
+    </div>
+    <div>
+      <b>Bibliography</b>
+
+      <table>
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="Lohstroh2019">1</a>]
+          </td>
+          <td class="bibtexitem">
+            Marten Lohstroh, &Iacute;&ntilde;igo&nbsp;&Iacute;ncer Romero, Andr&eacute;s Goens, Patricia
+            Derler, Jeronimo Castrillon, Edward&nbsp;A. Lee, and Alberto
+            Sangiovanni-Vincentelli.
+            Reactors: A deterministic model for composable reactive systems.
+            In Roger Chamberlain, Martin Edin&nbsp;Grimheden, and Walid Taha, editors,
+            <em>Cyber Physical Systems. Model-Based Design -- Proceedings of the 9th
+              Workshop on Design, Modeling and Evaluation of Cyber Physical Systems (CyPhy
+              2019) and the Workshop on Embedded and Cyber-Physical Systems Education (WESE
+              2019)</em>, pages 59--85, Cham, February 2020. Springer International Publishing.
+            [&nbsp;<a href="refs_bib.html#Lohstroh2019">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1007/978-3-030-41131-2\_4">DOI</a>&nbsp;|
+            <a href="https://link.springer.com/chapter/10.1007/978-3-030-41131-2\_4">http</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="LohstrohEtAl20LF">2</a>]
+          </td>
+          <td class="bibtexitem">
+            Marten Lohstroh, Christian Menard, Alexander Schulz-Rosengarten, Matthew Weber,
+            Jeronimo Castrillon, and Edward&nbsp;A. Lee.
+            A language for deterministic coordination across multiple timelines.
+            In <em>Forum for Specification and Design Languages (FDL)</em>. IEEE,
+            September 15-17 2020.
+            [&nbsp;<a href="refs_bib.html#LohstrohEtAl20LF">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1109/FDL50818.2020.9232939">DOI</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="NasaSat">3</a>]
+          </td>
+          <td class="bibtexitem">
+            Stephen&nbsp;A. Jacklin.
+            Small-satellite mission failure rates.
+            Technical Report NASA/TM—2018– 220034, NASA Ames Research Center,
+            Moffett Field, CA, march 2019.
+            [&nbsp;<a href="refs_bib.html#NasaSat">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="PRET">4</a>]
+          </td>
+          <td class="bibtexitem">
+            Stephen&nbsp;A. Edwards and Edward&nbsp;A. Lee.
+            The case for the precision timed (pret) machine.
+            In <em>Proceedings of the 44th Annual Design Automation Conference</em>,
+            DAC '07, page 264–265, New York, NY, USA, 2007. Association for Computing
+            Machinery.
+            [&nbsp;<a href="refs_bib.html#PRET">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1145/1278480.1278545">DOI</a>&nbsp;|
+            <a href="https://doi.org/10.1145/1278480.1278545">http</a>&nbsp;]
+            <blockquote><font size="-1">
+              Patterson and Ditzel [12] did not invent reduced instruction set computers (RISC) in 1980. Earlier computers all had reduced instruction sets. Instead, they argued that trends in computer architecture had gotten off the sweet spot, and that by dropping back a few years and forking a new version of architectures, leveraging what had been learned, they could get better computers by employing simpler instruction sets.
+            </font></blockquote>
+            <blockquote><font size="-1">
+              Keywords: real-time embedded systems, predicable timing
+            </font></blockquote>
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="EGS">5</a>]
+          </td>
+          <td class="bibtexitem">
+            Binqi Sun, Mirco Theile, Ziyuan Qin, Daniele Bernardini, Debayan Roy, Andrea
+            Bastoni, and Marco Caccamo.
+            Edge generation scheduling for dag tasks using deep reinforcement
+            learning.
+            <em>IEEE Transactions on Computers</em>, pages 1--14, 2024.
+            [&nbsp;<a href="refs_bib.html#EGS">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1109/TC.2024.3350243">DOI</a>&nbsp;]
+            <blockquote><font size="-1">
+              Keywords: Task analysis;Processor scheduling;Job shop scheduling;Program processors;Real-time systems;Dispatching;Time factors;DAG scheduling;real-time;edge generation;deep reinforcement learning
+            </font></blockquote>
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="mocasin">6</a>]
+          </td>
+          <td class="bibtexitem">
+            Christian Menard, Andr&eacute;s Goens, Gerald Hempel, Robert Khasanov, Julian
+            Robledo, Felix Teweleitt, and Jeronimo Castrillon.
+            Mocasin—rapid prototyping of rapid prototyping tools: A framework
+            for exploring new approaches in mapping software to heterogeneous
+            multi-cores.
+            In <em>Proceedings of the 2021 Drone Systems Engineering and Rapid
+            Simulation and Performance Evaluation: Methods and Tools Proceedings</em>,
+            DroneSE and RAPIDO '21, page 66–73, New York, NY, USA, 2021. Association
+            for Computing Machinery.
+            [&nbsp;<a href="refs_bib.html#mocasin">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1145/3444950.3447285">DOI</a>&nbsp;|
+            <a href="https://doi.org/10.1145/3444950.3447285">http</a>&nbsp;]
+            <blockquote><font size="-1">
+              We present Mocasin, an open-source rapid prototyping framework for researching, implementing and validating new algorithms and solutions in the field of mapping software to heterogeneous multi-cores. In contrast to the many existing tools that often specialize for a particular use-case, Mocasin is an open, flexible and generic research environment that abstracts over the approaches taken by other tools. Mocasin is designed to support a wide range of models of computation and input formats, implements manifold mapping strategies and provides an adjustable high-level simulator for performance estimation. This infrastructure serves as a flexible vehicle for exploring new approaches and as a blueprint for building customized tools. We highlight the key design aspects of Mocasin that enable its flexibility and illustrate its capabilities in a case-study showing how Mocasin can be used for building a customized tool for researching runtime mapping strategies in an LTE uplink receiver.
+            </font></blockquote>
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="PretVM">7</a>]
+          </td>
+          <td class="bibtexitem">
+            Shaokai Lin, Mirco Thiele, Erling Jellum, Binqi Sun, Chadlia Jerad, Tassilo
+            Tanneberger, Christian Menard, Yimo Xu, Guangyu Feng, Marten Lohstroh,
+            Jeronimo Castrillon, and Edward Lee.
+            Pretvm: Predictable, repeatable, and optimizable real-time code.
+            This work is not yet published.
+            [&nbsp;<a href="refs_bib.html#PretVM">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+      </table><hr><p><em>This file was generated by
+      <a href="http://www.lri.fr/~filliatr/bibtex2html/">bibtex2html</a> 1.99.</em></p>
     </div>
   </div>
 </div>

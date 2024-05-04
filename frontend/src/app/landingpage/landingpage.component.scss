@@ -1,7 +1,10 @@
 .footer {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .logo {
@@ -16,16 +19,27 @@
 }
 
 .authors {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1rem;
-  justify-content: space-around;
+  @media (max-width: 600px) {
+    grid-template-columns: 1fr;
+  }
+
+  //display: flex;
+  //flex-direction: row;
+  //gap: 1rem;
+  //justify-content: space-around;
 }
 
 .author {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  a {
+    justify-self: flex-start;
+    align-self: flex-start;
+  }
 }
 
 .elements {
@@ -37,4 +51,10 @@
 
 .demo-button {
   width: 5rem;
+}
+
+
+p {
+  padding-bottom: 1rem;
+  padding-top: 1rem;
 }
