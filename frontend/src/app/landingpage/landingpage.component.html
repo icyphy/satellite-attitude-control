@@ -30,7 +30,7 @@
         Flight software is becoming increasingly complex and
         unyielding as mission profiles and spacecraft become more sophisticated. We live
         in an age where many full or partial mission failures are caused by
-        faulty software <a href="#NasaSat">[1]</a>. To improve the reliability and performance of
+        faulty software<a href="#NasaSat">[1]</a>. To improve the reliability and performance of
         future space flight software, we advocate for the adoption of
         Lingua Franca (LF), a programming model for deterministic, concurrent, and
         real-time Cyber-Physical Systems (CPS). We also propose the use of PretVM, an execution backend for LF
@@ -41,21 +41,21 @@
       <h3>Background</h3>
       <p>
         Lingua Franca is a polyglot coordination language that offers
-        deterministic concurrency and timing semantics <a href="#Lohstroh2019">[2]</a>. With this
+        deterministic concurrency and timing semantics<a href="#Lohstroh2019">[2]</a>. With this
         programming model, the programmer no longer has to worry about race conditions
         and other concurrency problems and can focus on the application logic. LF also removes
         the gap between ``model'' and ``code'' by allowing the
         same LF code to run both in simulation and on the real hardware.
         It's known that a subset of LF programs that are driven by timers can be compiled
         down to quasi-static schedules that can be executed on PretVM.
-        PretVM <a href="#PretVM">[3]</a> is a register-based virtual machine built to
+        PretVM<a href="#PretVM">[3]</a> is a register-based virtual machine built to
         fascilitate the scheduling and timing of concurrent tasks. Its virtual
         instruction set contains standard instructions such as <em>ADD</em> and <em>BEQ</em>
         borrowed from RISC-V. The PretVM instruction set also includes timing
         instructions, such as <em>DU</em> (delay until) and <em>WU</em> (wait until), which are inspired
-        by PRET Machines~ <a href="#PretVM">[3]</a>.
+        by PRET Machines<a href="#PretVM">[3]</a>.
         PretVM can be used as an execution backend for LF. External
-        tools, include the Edge Generation Scheduler~ <a href="#EGS">[4]</a> and Mocasin~ <a href="#mocasin">[5]</a>, can
+        tools, include the Edge Generation Scheduler<a href="#EGS">[4]</a> and Mocasin<a href="#mocasin">[5]</a>, can
         be used to guide the generation of quasi-static schedules.
       </p>
 
@@ -76,8 +76,9 @@
       </p>
 
     </div>
-    <div>
+    <div class="links">
       <feel-button routerLink="satellite"><b class="demo-button">Demo!</b></feel-button>
+      <feel-button link="https://github.com/icyphy/satellite-attitude-control"><app-icon-github/>Github</feel-button>
     </div>
 
     <div class="footer">
@@ -129,11 +130,9 @@
             In <em>Forum for Specification and Design Languages (FDL)</em>. IEEE,
             September 15-17 2020.
             [&nbsp;<a href="refs_bib.html#LohstrohEtAl20LF">bib</a>&nbsp;|
-            <a href="http://dx.doi.org/10.1109/FDL50818.2020.9232939">DOI</a>&nbsp;]
-
+            <a href="https://ieeexplore.ieee.org/document/9232939">DOI</a>&nbsp;]
           </td>
         </tr>
-
 
         <tr valign="top">
           <td align="right" class="bibtexnumber">
@@ -145,7 +144,7 @@
             Technical Report NASA/TM—2018– 220034, NASA Ames Research Center,
             Moffett Field, CA, march 2019.
             [&nbsp;<a href="refs_bib.html#NasaSat">bib</a>&nbsp;]
-
+            [<a href="https://ntrs.nasa.gov/api/citations/20190002705/downloads/20190002705.pdf">PDF</a>&nbsp;]
           </td>
         </tr>
 
