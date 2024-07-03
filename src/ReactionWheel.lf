@@ -156,7 +156,6 @@ reactor Controller(period=100ms) {
               p_controller_value * velocity_vector[0]  // present component
             + i_controller_value * self->error_accumulator[0] // integral component
             + d_controller_value * (self->last_error[0] - error[0]); // differential component
-        // FIXME: Fill in the other two control signals.
         controll_signal->value[1] = 
               p_controller_value * velocity_vector[1]  // present component
             + i_controller_value * self->error_accumulator[1] // integral component
