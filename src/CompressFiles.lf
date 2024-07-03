@@ -1,3 +1,10 @@
+/**
+ * This LF program assumes there is a "./data" folder at the location where its
+ * executable is invoked. It reads all the files inside the data folder,
+ * compress them, and write the compressed files into the same folder.
+ *
+ * @author Shaokai Lin <shaokai@berkeley.edu>
+ */
 target C {
     files: ["lzav/lzav.h"],
     scheduler: {
@@ -51,7 +58,7 @@ reactor Director {
 
     state filenames: {=char**=}
     state num_files: int = 0
-    state dir: char* = "../data/"
+    state dir: char* = "./data/"
     state count: int = 0
 
     input done_in: bool
@@ -221,7 +228,7 @@ reactor Compresser {
     }
     =}
 
-    state dir: char* = "../data/"
+    state dir: char* = "./data/"
     input filename: char*
     output done: bool
     
