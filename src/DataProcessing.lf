@@ -3,7 +3,7 @@
  */
 target C {
     //files: [ "./common.c" ],
-    scheduler: STATIC,
+    //scheduler: STATIC,
     build-type: Debug,
 }
 
@@ -130,15 +130,15 @@ reactor Process {
 
 main reactor {
   process = new Process()
-  // receiveFromReactionWheel = new TcpSocketServer(host="127.0.0.1", port=31811);
-  receiveFromReactionWheel = new TcpSocketServer(host="192.168.123.111", port=31811);
+  receiveFromReactionWheel = new TcpSocketServer(host="127.0.0.1", port=31811);
+  // receiveFromReactionWheel = new TcpSocketServer(host="192.168.123.111", port=31811);
   // sendToGroundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
-  // sendToGroundstation = new TcpSocketClient(host="88.198.121.105", port=31812); // Tassilo's server
-  sendToGroundstation = new TcpSocketClient(host="192.168.123.125", port=31812);
+  sendToGroundstation = new TcpSocketClient(host="88.198.121.105", port=31812); // Tassilo's server
+  //sendToGroundstation = new TcpSocketClient(host="192.168.123.125", port=31812);
   
   process.telemetry_out -> process.telemetry_in
   receiveFromReactionWheel.from_satelitte -> process.from_reactionWheel
   process.to_ground -> sendToGroundstation.to_ground
-  // process.to_satellite -> receiveFromReactionWheel.to_satellite
+  process.to_satellite -> receiveFromReactionWheel.to_satellite
   sendToGroundstation.from_ground -> process.from_ground
 }
