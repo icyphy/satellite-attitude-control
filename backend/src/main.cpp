@@ -16,7 +16,6 @@ class MarshalClass {
     virtual auto to_json() -> std::string = 0;
 };
 
-template<class T>
 class TcpServer {
 private:
     int socket_ = 0;
@@ -180,7 +179,7 @@ auto command_to_tcp_frame(T* command) -> TcpMessage  {
 
 int main() {
     std::cout << "Hello, World!" << std::endl;
-    TcpServer server{};
+    TcpServer server;
     BroadcastServer websocket{};
     auto thread = std::thread([ObjectPtr = &websocket]() {
         ObjectPtr->run(8080);
