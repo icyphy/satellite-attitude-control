@@ -14,7 +14,6 @@ export interface CommandSetOrientation {
   yaw: number,
   pitch: number,
   roll: number,
-  time: number
 }
 
 export interface CommandFetchValue {

@@ -87,6 +87,11 @@ void BroadcastServer::process_messages() noexcept {
             // add new connection to connection pool
             connections_.push_back(a.hdl);
 
+            // execute the ReactionWheel Program with configurable ID
+            // Save the connection with the ReactionWheel ID
+            // When you Receive something from ReactionWheel with ID x you can proxy it to the corresponding websocket connection
+            // and vice versa
+
         } else if (a.type == UNSUBSCRIBE) {
             std::lock_guard<std::mutex> guard(connection_lock_);
 
@@ -96,7 +101,7 @@ void BroadcastServer::process_messages() noexcept {
 
             auto index = pos - std::begin(connections_);
 
-            // after successfully searching the connection we remove it from the connection poool
+            // after successfully searching the connection we remove it from the connection pool
             connections_.erase(std::begin(connections_) + index);
 
         } else if (a.type == MESSAGE) {
@@ -111,7 +116,6 @@ void BroadcastServer::process_messages() noexcept {
                     command_body->yaw = result["yaw"];
                     command_body->pitch = result["pitch"];
                     command_body->roll = result["roll"];
-                    command_body->time = result["time"];
 
                     Command command;
                     command.descriptor = 0;
@@ -145,6 +149,9 @@ void BroadcastServer::send_message(const std::string &message) noexcept {
         std::lock_guard<std::mutex> guard(connection_lock_);
         std::cout <<"size(con):" << connections_.size() << "send:" << message << std::endl;
         //connection_list::iterator it;
+
+        // we only send it to the connection with corresponding session id and not all connections
+
         for (auto &connection: connections_) {
             server_.send(connection, message, websocketpp::frame::opcode::TEXT);
         }

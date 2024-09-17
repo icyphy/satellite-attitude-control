@@ -25,7 +25,6 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
     yaw: new FormControl<number | null>(null, [Validators.required]),
     pitch: new FormControl<number | null>(null, [Validators.required]),
     roll: new FormControl<number | null>(null, [Validators.required]),
-    time: new FormControl<number | null>(null, [Validators.required])
   })
 
   constructor(private websocketService: WebSocketService) { }
@@ -194,17 +193,19 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   }
   public submit() {
     if(!this.form.valid) {
+      console.log("form is invalid");
       return;
     }
 
+    console.log("form is valid");
     const form_data = this.form.getRawValue();
 
+    console.log("sending to groundstation");
     this.websocketService.send({
       descriptor: 0,
       yaw: form_data.yaw,
       pitch: form_data.pitch,
       roll: form_data.roll,
-      time: form_data.time
     });
   }
 
@@ -213,7 +214,6 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
       descriptor: 1,
       amount: 100,
     });
-
   }
 
   ngAfterViewInit(): void {

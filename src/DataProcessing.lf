@@ -15,16 +15,31 @@ preamble {=
 =}
 
 reactor Process {
-  input from_reactionWheel: MessageFromClient
-  input telemetry_in: Telemetry
+  input from_satellite: MessageFromClient
   input from_ground: TcpMessage
-  output telemetry_out: Telemetry
+  
   output to_ground: TcpMessage
   output to_satellite: MessageFromClient
+
+  input telemetry_in: Telemetry
+  output telemetry_out: Telemetry
+  
   state latest: Telemetry
   state file: FILE*
   state lines_written: int = 0
   timer send_to_ground(0, 1 sec)
+  timer update(0, 50msec)
+
+  state yaw: double = 0.0;
+  state pitch: double = 0.0;
+  state roll: double = 0.0;
+  state yaw_vel: double = 0.0;
+  state pitch_vel: double = 0.0;
+  state roll_vel: double = 0.0;
+
+  state desired_yaw: double = 0.0;
+  state desired_pitch: double = 0.0;
+  state desired_roll: double = 0.0;
 
   preamble {=
     // int mkdir_p(const char *path, mode_t mode) {
@@ -59,55 +74,64 @@ reactor Process {
     // }
   =}
 
-  reaction(send_to_ground) -> to_ground {=
-    TcpMessage message;
-    message.message = malloc(sizeof(Telemetry));
-    memcpy(message.message, &self->latest, sizeof(Telemetry));
-    message.size = sizeof(Telemetry);
-    message.descriptor = 0;
-    
-    lf_print("send telemetry");
-    lf_set(to_ground, message);
+  reaction(update) {=
+    self->yaw_vel = -0.05 * (self->yaw - self->desired_yaw);
+    self->roll_vel = -0.05 * (self->roll - self->desired_roll);
+    self->pitch_vel = -0.05 * (self->pitch - self->desired_pitch);
+
+    self->yaw += self->yaw_vel * 0.5;
+    self->roll += self->roll_vel * 0.5;
+    self->pitch += self->pitch_vel * 0.5;
   =}
 
   // Relay command message from ground station to the reaction wheel.
   // FIXME: Incomplete.
-  // reaction(from_ground) -> to_satellite {=
-  //   TcpMessage value = from_ground->value;
-
-  //   switch (value.descriptor) {
-  //     // Attitude update command
-  //     case 0:
-  //       assert(value.size >= sizeof(Command));
-  //       Command command_struct;
-  //       memcpy(&command_struct, value.message, sizeof(Command));
-
-  //       lf_set(to_satellite, command_struct);
-  //       break;
-  //     default:
-  //       lf_print("unknown descriptor received %d", value.descriptor);
-  //   }
-
-  //   free(value.message);
-  // =}
-  
-  reaction (from_reactionWheel) -> telemetry_out {=
-    MessageFromClient message = from_reactionWheel->value;
-    TcpMessage value = message.message;
+  reaction(from_ground) -> to_satellite {=
+    lf_print("received message from ground!");
+    TcpMessage value = from_ground->value;
 
     switch (value.descriptor) {
+      // Attitude update command
       case 0:
-        assert(value.size >= sizeof(Telemetry));
-        Telemetry telemetry_struct;
-        memcpy(&telemetry_struct, value.message, sizeof(Telemetry));
+        lf_print("received id 0");
+        assert(value.size >= sizeof(Command));
+        Command command_struct;
+        MessageFromClient x;
+        x.message = value;
+        memcpy(&command_struct, value.message, sizeof(Command));
 
-        lf_set(telemetry_out, telemetry_struct);
+        self->desired_pitch = command_struct.pitch;
+        self->desired_yaw = command_struct.yaw;
+        self->desired_roll = command_struct.roll;
+
+        //lf_set(to_satellite, x);
         break;
       default:
         lf_print("unknown descriptor received %d", value.descriptor);
     }
 
     free(value.message);
+  =}
+  
+  reaction (send_to_ground) -> telemetry_out, to_ground {=
+    lf_print("received message from satellite!");
+
+    Telemetry telemetry;
+    telemetry.yaw = self->yaw;
+    telemetry.pitch = self->pitch;
+    telemetry.roll = self->roll;
+    telemetry.vel_yaw = self->yaw_vel;
+    telemetry.vel_pitch = self->pitch_vel;
+    telemetry.vel_roll = self->roll_vel;
+    telemetry.time = time(NULL);
+
+    TcpMessage message;
+    message.message = malloc(sizeof(Telemetry));
+    message.size = sizeof(Telemetry);
+    memcpy(message.message, &telemetry, sizeof(Telemetry));
+    
+    lf_print("sending telemetry");
+    lf_set(to_ground, message);
   =}
 
   reaction(telemetry_in) {=
@@ -121,24 +145,21 @@ reactor Process {
 
     lf_print("[Telemetry] yaw: %lf, vel_yaw: %f, pitch: %lf, vel_pitch: %f, roll: %lf, vel_roll: %f, time: %lld", 
       self->latest.yaw, self->latest.vel_yaw, self->latest.pitch, self->latest.vel_pitch, self->latest.roll, self->latest.vel_roll, self->latest.time);
-
-    // Write to file
-
   =}
 }
 
 
 main reactor {
   process = new Process()
-  receiveFromReactionWheel = new TcpSocketServer(host="127.0.0.1", port=31811);
+  //receiveFromReactionWheel = new TcpSocketServer(host="127.0.0.1", port=31811);
   // receiveFromReactionWheel = new TcpSocketServer(host="192.168.123.111", port=31811);
-  // sendToGroundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
-  sendToGroundstation = new TcpSocketClient(host="88.198.121.105", port=31812); // Tassilo's server
+  sendToGroundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
+  //sendToGroundstation = new TcpSocketClient(host="88.198.121.105", port=31812); // Tassilo's server
   //sendToGroundstation = new TcpSocketClient(host="192.168.123.125", port=31812);
   
   process.telemetry_out -> process.telemetry_in
-  receiveFromReactionWheel.from_satelitte -> process.from_reactionWheel
-  process.to_ground -> sendToGroundstation.to_ground
-  process.to_satellite -> receiveFromReactionWheel.to_satellite
+  //receiveFromReactionWheel.from_satelitte -> process.from_satellite
+  process.to_ground -> sendToGroundstation.to_ground after 1sec;
+  //process.to_satellite -> receiveFromReactionWheel.to_satellite
   sendToGroundstation.from_ground -> process.from_ground
 }

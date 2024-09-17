@@ -47,11 +47,14 @@ struct action {
 class BroadcastServer {
 private:
     server server_;
+    //std::map<std::string, std::tuple<connection_hdl, int>> connections_{};
+    //session id -> websocket connection
+    //session id -> tcp/ip connection
+
     std::vector<connection_hdl> connections_;
 
     std::queue<action> actions_{};
     std::atomic<bool> kill_{};
-
 
     std::vector<Command> received_commands_{};
 

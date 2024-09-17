@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <unistd.h>
 #include <cstring>
@@ -10,6 +11,12 @@
 #include "common.h"
 #include "broadcast_server.h"
 
+class MarshalClass {
+    virtual auto from_binary(TcpMessage message) -> MarshalClass = 0;
+    virtual auto to_json() -> std::string = 0;
+};
+
+template<class T>
 class TcpServer {
 private:
     int socket_ = 0;
@@ -163,10 +170,10 @@ auto command_to_tcp_frame(T* command) -> TcpMessage  {
     TcpMessage message;
 
     message.size = sizeof(T);
-    message.message = static_cast<char *>(malloc(sizeof(T)));
+    message.message = (char*)(command);
     message.descriptor = 0;
 
-    std::memcpy(message.message, command, sizeof(T));
+    //std::memcpy(message.message, command, sizeof(T));
 
     return message;
 }
@@ -197,6 +204,7 @@ int main() {
             auto command = websocket.get_command();
 
             if (command.has_value()) {
+                std::cout << "sending command: " << command->descriptor << std::endl;
                 auto command_value = command.value();
                 if (command->descriptor == 0) {
                     std::cout << "Send Orientate Command to Satellite" << std::endl;

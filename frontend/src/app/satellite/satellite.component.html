@@ -16,15 +16,15 @@
         <p #zrot id="zrot"></p>
       </div>
       <div class="element">
-        <b>Rotation X:</b>
+        <b>Roll:</b>
         <p #xpos id="xpos"></p>
       </div>
       <div class="element">
-        <b>Rotation Y:</b>
+        <b>Yaw: :</b>
         <p #ypos id="ypos"></p>
       </div>
       <div class="element">
-        <b>Rotation Z:</b>
+        <b>Pitch:</b>
         <p #zpos id="zpos"></p>
       </div>
       <div class="element">
@@ -44,9 +44,9 @@
       <div class="element">
         <feel-text-field formControlName="roll" label="Roll:" type="number"></feel-text-field>
       </div>
-      <div class="element">
+      <!--<div class="element">
         <feel-text-field formControlName="time" label="Time:" type="number"></feel-text-field>
-      </div>
+      </div>-->
       <feel-button label="Send Command"></feel-button>
     </form>
     <form (submit)="fetchHistory()">
