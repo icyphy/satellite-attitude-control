@@ -1,7 +1,7 @@
-{ mkPnpmPackage }:
+{ mkPnpmPackage, src }:
 
 mkPnpmPackage {
-  src = ./../frontend/.;
+  inherit src;
 
   installInPlace = true;
 
