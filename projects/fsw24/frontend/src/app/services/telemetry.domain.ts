@@ -20,3 +20,7 @@ export interface CommandFetchValue {
   descriptor: number,
   amount: number
 }
+
+export interface UserInteraction {
+  username: string
+}

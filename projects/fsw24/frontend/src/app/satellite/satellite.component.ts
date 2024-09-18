@@ -1,7 +1,7 @@
 import {Component, AfterViewInit, ElementRef, Input, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import * as THREE from "three";
 import {WebSocketService} from "../services/websocket.service";
-import {CommandFetchValue, CommandSetOrientation, Telemetry} from "../services/telemetry.domain";
+import {CommandFetchValue, CommandSetOrientation, Telemetry, UserInteraction} from "../services/telemetry.domain";
 import URDFLoader, {URDFRobot} from 'urdf-loader';
 import {LoadingManager} from "three";
 import {ButtonComponent, TextFieldComponent} from "@feel/form";
@@ -135,9 +135,6 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
         this.satellite.rotation.z = first[2];
 
       }
-      //this.satellite.rotation.x += this.rotationDeltaX;
-      //this.satellite.rotation.y += this.rotationDeltaY;
-      //this.satellite.rotation.z += this.rotationDeltaZ;
     }
   }
 
@@ -148,7 +145,11 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
 
     this.websocketService
       .sub()
-      .subscribe((receivedMessage: Telemetry | CommandFetchValue | CommandSetOrientation) => {
+      .subscribe((receivedMessage: Telemetry | CommandFetchValue | CommandSetOrientation | UserInteraction) => {
+        if("username" in receivedMessage) {
+          
+        }
+
       if(!("vel_yaw" in receivedMessage) || !("vel_pitch" in receivedMessage) || !("vel_roll" in receivedMessage)) {
         return;
       }
@@ -175,6 +176,7 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
       this.zposRef.nativeElement.innerText = receivedMessage.roll;
       this.timeRef.nativeElement.innerText = receivedMessage.time;
     });
+
     this.clock = new THREE.Clock();
     this.clock.start();
     this.startTime = this.clock.getElapsedTime();

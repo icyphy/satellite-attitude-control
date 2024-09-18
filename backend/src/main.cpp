@@ -153,8 +153,6 @@ auto convert_telemetry_to_json(Telemetry telemetry) -> std::string {
     double vel_roll = telemetry.vel_roll;
     unsigned long time = telemetry.time;
 
-    //lf_print("telemetry angle: %lf angular velocity: %lf time: %ld", angle, angular_momentum, time);
-
     char* message = static_cast<char *>(malloc(300));
     int size = sprintf(message, R"({"yaw": %lf, "pitch": %lf, "roll": %lf, "vel_yaw": %lf, "vel_pitch": %lf, "vel_roll": %lf, "time": %li})",
                        yaw, pitch, roll, vel_yaw, vel_pitch, vel_roll, time);
@@ -172,13 +170,10 @@ auto command_to_tcp_frame(T* command) -> TcpMessage  {
     message.message = (char*)(command);
     message.descriptor = 0;
 
-    //std::memcpy(message.message, command, sizeof(T));
-
     return message;
 }
 
 int main() {
-    std::cout << "Hello, World!" << std::endl;
     TcpServer server;
     BroadcastServer websocket{};
     auto thread = std::thread([ObjectPtr = &websocket]() {
