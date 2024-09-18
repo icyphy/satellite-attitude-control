@@ -6,9 +6,8 @@ import {CommandFetchValue, CommandSetOrientation, Telemetry, UserInteraction} fr
   providedIn: 'root',
 })
 export class WebSocketService {
-  //subject = webSocket<Telemetry | CommandFetchValue | CommandSetOrientation>('wss://fsw24.tanneberger.me/websocket');
-  subject = webSocket<Telemetry | CommandFetchValue | CommandSetOrientation | UserInteraction>('ws://localhost:8080');
-  //subject = webSocket<Telemetry | Command>("ws://127.0.0.1:8080")
+  //subject = webSocket<Telemetry | CommandFetchValue | CommandSetOrientation | UserInteraction>('ws://localhost:8080');
+  subject = webSocket<Telemetry | CommandFetchValue | CommandSetOrientation | UserInteraction>('wss://tcrs24.tanneberger.me/websocket');
 
   public sub(): Observable<Telemetry | CommandFetchValue | CommandSetOrientation | UserInteraction> {
     return this.subject;
