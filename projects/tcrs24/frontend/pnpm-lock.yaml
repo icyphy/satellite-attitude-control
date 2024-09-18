@@ -32,6 +32,9 @@ dependencies:
   '@feel/form':
     specifier: ^0.0.24
     version: 0.0.24(@angular/cdk@17.3.4)(@angular/common@17.3.3)(@angular/core@17.3.3)(@feel/style@0.0.24)
+  '@feel/notification':
+    specifier: ^0.0.24
+    version: 0.0.24(@angular/common@17.3.3)(@angular/core@17.3.3)(@feel/style@0.0.24)
   '@feel/style':
     specifier: ^0.0.24
     version: 0.0.24(@angular/common@17.3.3)(@angular/core@17.3.3)
@@ -2182,6 +2185,19 @@ packages:
       '@feel/style': 0.0.24
     dependencies:
       '@angular/cdk': 17.3.4(@angular/common@17.3.3)(@angular/core@17.3.3)(rxjs@7.8.1)
+      '@angular/common': 17.3.3(@angular/core@17.3.3)(rxjs@7.8.1)
+      '@angular/core': 17.3.3(rxjs@7.8.1)(zone.js@0.14.4)
+      '@feel/style': 0.0.24(@angular/common@17.3.3)(@angular/core@17.3.3)
+      tslib: 2.6.2
+    dev: false
+
+  /@feel/notification@0.0.24(@angular/common@17.3.3)(@angular/core@17.3.3)(@feel/style@0.0.24):
+    resolution: {integrity: sha512-R4mDgOZ9dzRjsT6l1kOsIiFEihv/lmGThG7bNplXZggYXRqVNfahaVRLhc+crG/1THfcHwgYrMHuHH781rki/A==, tarball: https://codeberg.org/api/packages/m4rc3l/npm/%40feel%2Fnotification/-/0.0.24/notification-0.0.24.tgz}
+    peerDependencies:
+      '@angular/common': ^17.0.0
+      '@angular/core': ^17.0.0
+      '@feel/style': 0.0.24
+    dependencies:
       '@angular/common': 17.3.3(@angular/core@17.3.3)(rxjs@7.8.1)
       '@angular/core': 17.3.3(rxjs@7.8.1)(zone.js@0.14.4)
       '@feel/style': 0.0.24(@angular/common@17.3.3)(@angular/core@17.3.3)
