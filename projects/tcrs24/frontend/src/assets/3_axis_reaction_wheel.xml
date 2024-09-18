@@ -1,0 +1,68 @@
+<mujoco model="3-axis reaction wheel satellite">
+  <compiler angle="radian"/> 
+  <option timestep="0.001" iterations="20" gravity="0 0 0">
+    <flag sensornoise="enable"/>
+  </option>
+
+  <default>
+    <geom rgba="0.45 0.6 0.6 1"/>
+  </default>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="1 1 1" rgb2="1 1 1" width="32" height="512"/>
+  </asset>
+
+  <worldbody>
+    <light directional="true" cutoff="4" exponent="20" diffuse="1 1 1" specular="0 0 0" pos=".9 .3 2.5" dir="-.9 -.3 -2.5"/>
+
+    <body name="platform" pos="0 0 0">
+      <site name="site-platform" pos="0 0 0"/>
+      <joint name="platform-joint" type="free"/>
+
+      <!-- Enclosing Cube -->
+      <geom name="enclosure" type="box" pos="0 0 0" size=".25 .25 .25" density="1000" rgba="0.8 0.8 0.8 0.3"/>
+
+      <!-- Reaction Wheel 1 -->
+      <body name="wheel0" pos="0 -0.15 0">
+        <joint name="axis0" type="hinge" axis="0 1 0"/>
+        <geom name="wheel0" type="cylinder" pos="0 0 0" size=".1 .05" density="100" euler="1.57 0 0" rgba="0.9 0 0 1"/>
+      </body>
+
+      <!-- Reaction Wheel 2 -->
+      <body name="wheel1" pos="0.15 0 0">
+        <joint name="axis1" type="hinge" axis="1 0 0"/>
+        <geom name="wheel1" type="cylinder" pos="0 0 0" size=".1 .05" density="100" euler="0 1.57 0" rgba="0 0.9 0 1"/>
+      </body>
+
+      <!-- Reaction Wheel 3 -->
+      <body name="wheel2" pos="0 0 0.15">
+        <joint name="axis2" type="hinge" axis="0 0 1"/>
+        <geom name="wheel2" type="cylinder" pos="0 0 0" size=".1 .05" density="100" rgba="0 0 0.9 1"/>
+      </body>
+
+      <!-- Solar Panels -->
+      <body name="solar_panel_left" pos="-1 0 0" euler="0.3 0 0">
+        <geom name="solar_panel_geom_left" type="box" size="0.75 0.2 0.005" rgba="0 0 0.2 1"/>
+      </body>
+      <body name="solar_panel_right" pos="1 0 0" euler="0.3 0 0">
+        <geom name="solar_panel_geom_right" type="box" size="0.75 0.2 0.005" rgba="0 0 0.2 1"/>
+      </body>
+
+    </body>
+  </worldbody>
+
+  <actuator>
+    <velocity joint='axis0' name='motor1'/>
+    <velocity joint='axis1' name='motor2'/>
+    <velocity joint='axis2' name='motor3'/>
+  </actuator>
+
+  <sensor>
+    <jointpos name="wheel0_pos" joint="axis0" noise="0.001"/>
+    <jointvel name="wheel0_vel" joint="axis0" noise="0.001"/>
+    <jointpos name="wheel1_pos" joint="axis1" noise="0.001"/>
+    <jointvel name="wheel1_vel" joint="axis1" noise="0.001"/>
+    <jointpos name="wheel2_pos" joint="axis2" noise="0.001"/>
+    <jointvel name="wheel2_vel" joint="axis2" noise="0.001"/>
+  </sensor>
+</mujoco>

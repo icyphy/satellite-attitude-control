@@ -1,0 +1,24 @@
+.canvas {
+  width: 80%;
+  height: 80%;
+}
+.telemetry {
+  display: flex;
+  flex-direction: column;
+  gap: 0rem;
+}
+
+.element {
+  display: grid;
+  grid-template-columns: 2fr 7fr;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+
+.monitor {
+  display: flex;
+  flex-direction: row;
+}
+.telemetry-card {
+  padding: 1rem;
+}

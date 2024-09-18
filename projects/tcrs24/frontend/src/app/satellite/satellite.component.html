@@ -1,0 +1,46 @@
+<div class="typography">
+  <div class="monitor">
+    <canvas #canvas id="canvas" class="canvas"></canvas>
+    <div class="telemetry">
+      <app-card class="telemetry-card">
+        <h2>Speed</h2>
+        <div class="element">
+          <b>Δ Yaw:</b><p #xrot id="xrot">0</p>
+        </div>
+        <div class="element">
+          <b>Δ Pitch:</b><p #yrot id="yrot">0</p>
+        </div>
+        <div class="element">
+          <b>Δ Roll:</b><p #zrot id="zrot">0</p>
+        </div>
+      </app-card>
+      <app-card class="telemetry-card">
+        <h2>Attitude</h2>
+        <div class="element">
+          <b>Yaw:</b><p #xpos id="xpos">0</p>
+        </div>
+        <div class="element">
+          <b>Pitch:</b><p #ypos id="ypos">0</p>
+        </div>
+        <div class="element">
+          <b>Roll:</b><p #zpos id="zpos">0</p>
+        </div>
+      </app-card>
+      <app-card class="telemetry-card">
+        <h2>Change Attitude</h2>
+        <form [formGroup]="form" (submit)="submit()">
+          <div class="element">
+            <b>Yaw:</b><feel-text-field formControlName="yaw" type="number"></feel-text-field>
+          </div>
+          <div class="element">
+            <b>Pitch:</b><feel-text-field formControlName="pitch" type="number"></feel-text-field>
+          </div>
+          <div class="element">
+            <b>Roll:</b><feel-text-field formControlName="roll" type="number"></feel-text-field>
+          </div>
+          <feel-button label="Send Command"></feel-button>
+        </form>
+      </app-card>
+    </div>
+  </div>
+</div>

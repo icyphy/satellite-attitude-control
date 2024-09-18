@@ -1,0 +1,74 @@
+<robot name="pi_robot">
+
+	<!-- * * * Link Definitions * * * -->
+
+ 	<link name="hull">
+		<visual>
+		    <origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<box size="1 1 1"/>
+			</geometry>
+			<material name="Cyan1">
+	       		<color rgba="0 0.9 0.9 1.0"/>
+	     	</material>
+		</visual>
+	</link>
+
+ 	<link name="solar1">
+		<visual>
+		    <origin xyz="0 1.5 0" rpy="0 0.8 0"/>
+			<geometry>
+              	<box size="0.5 1 0.07"/>
+			</geometry>
+			<material name="Blue1">
+	       		<color rgba="0.2 0.2 0.6 1.0"/>
+	     	</material>
+		</visual>
+	</link>
+ 	<link name="solar2">
+		<visual>
+		    <origin xyz="0 -1.5 0" rpy="0 0.8 0"/>
+			<geometry>
+              	<box size="0.5 1 0.07"/>
+			</geometry>
+			<material name="Blue1">
+	       		<color rgba="0.2 0.2 0.6 1.0"/>
+	     	</material>
+		</visual>
+	</link>
+
+	<link name="link">
+		<visual>
+		    <origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<box size="0.07 3 0.07"/>
+			</geometry>
+			<material name="Black1">
+	       		<color rgba="0.05 0.05 0.05 1.0"/>
+	     	</material>
+		</visual>
+	</link>
+
+  	<link name="reaction_wheel_0">
+		<visual>
+			<origin xyz="0.5 0 0" rpy="0 1.570796 0"/>
+			<geometry>
+				<cylinder radius="0.25" length="0.3"/>
+			</geometry>
+	     	<material name="Red1">
+				<color rgba="1 0 0 1.0"/>
+			</material>
+	   </visual>
+	</link>
+  	<link name="reaction_wheel_1">
+		<visual>
+			<origin xyz="-0.5 0 0" rpy="0 1.570796 0"/>
+			<geometry>
+				<cylinder radius="0.25" length="0.3"/>
+			</geometry>
+	     	<material name="Red1">
+				<color rgba="1 0 0 1.0"/>
+			</material>
+	   </visual>
+	</link>
+</robot>

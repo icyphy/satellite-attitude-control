@@ -85,7 +85,7 @@ void BroadcastServer::process_messages() noexcept {
             std::lock_guard<std::mutex> guard(connection_lock_);
 
             // add new connection to connection pool
-            connections_.push_back(a.hdl);
+            connections_.emplace_back(std::move(a.hdl));
 
             // execute the ReactionWheel Program with configurable ID
             // Save the connection with the ReactionWheel ID
@@ -95,8 +95,8 @@ void BroadcastServer::process_messages() noexcept {
         } else if (a.type == UNSUBSCRIBE) {
             std::lock_guard<std::mutex> guard(connection_lock_);
 
-            const auto pos = std::find_if(connections_.begin(), connections_.end(), [&a](const connection_hdl &ptr1) {
-                return ptr1.lock().get() == ((const std::weak_ptr<void> &) a.hdl).lock().get();
+            const auto pos = std::find_if(connections_.begin(), connections_.end(), [&a](const Connection &ptr1) {
+                return ptr1.hdl_.lock().get() == ((const std::weak_ptr<void> &) a.hdl).lock().get();
             });
 
             auto index = pos - std::begin(connections_);
@@ -111,6 +111,11 @@ void BroadcastServer::process_messages() noexcept {
 
 
             if (result.contains("descriptor")) {
+                const auto conn = std::find_if(connections_.begin(), connections_.end(), [&a](const Connection &ptr1) {
+                    return ptr1.hdl_.lock().get() == ((const std::weak_ptr<void> &) a.hdl).lock().get();
+                });
+                std::string message = R"({"username": ")" + conn->name_ + "\"}";
+                this->send_message(message);
                 if (result["descriptor"] == 0 && result.contains("yaw") && result.contains("pitch") && result.contains("roll")) {
                     auto* command_body = new SetPositionCommand[1];
                     command_body->yaw = result["yaw"];
@@ -133,9 +138,9 @@ void BroadcastServer::process_messages() noexcept {
 
                     std::lock_guard<std::mutex> command_lock(command_lock_);
                     received_commands_.insert(received_commands_.begin(), command);
-                }else {
+                } else {
                     std::cout << "user didn't specify all necessary values" << std::endl;
-                }
+                };
             }
         } else {
             // undefined.
@@ -153,7 +158,7 @@ void BroadcastServer::send_message(const std::string &message) noexcept {
         // we only send it to the connection with corresponding session id and not all connections
 
         for (auto &connection: connections_) {
-            server_.send(connection, message, websocketpp::frame::opcode::TEXT);
+            server_.send(connection.hdl_, message, websocketpp::frame::opcode::TEXT);
         }
     }
 }

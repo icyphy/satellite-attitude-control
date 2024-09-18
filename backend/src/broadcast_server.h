@@ -44,6 +44,19 @@ struct action {
     server::message_ptr msg;
 };
 
+static const char* names[4]= {"elephant", "giraffe", "lion", "tiger"};
+
+class Connection {
+public:
+
+    connection_hdl hdl_;
+    std::string name_;
+
+    Connection(connection_hdl&& hdl) : hdl_(std::move(hdl)){
+        name_ = names[rand() % 4];
+    }
+};
+
 class BroadcastServer {
 private:
     server server_;
@@ -51,7 +64,7 @@ private:
     //session id -> websocket connection
     //session id -> tcp/ip connection
 
-    std::vector<connection_hdl> connections_;
+    std::vector<Connection> connections_;
 
     std::queue<action> actions_{};
     std::atomic<bool> kill_{};

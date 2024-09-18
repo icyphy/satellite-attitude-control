@@ -1,0 +1,197 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "lf-frontend": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/lf/browser",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "polyfills": [
+              "zone.js"
+            ],
+            "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ],
+            "styles": [
+              "node_modules/@fontsource/dm-sans/400.css",
+              "node_modules/@fontsource/dm-sans/400-italic.css",
+              "node_modules/@fontsource/dm-sans/700.css",
+              "node_modules/@fontsource/dm-sans/700-italic.css",
+              "node_modules/@fontsource/dm-mono/400.css",
+              "node_modules/@fontsource/dm-mono/400-italic.css",
+              "node_modules/@fontsource/dm-mono/500.css",
+              "node_modules/@fontsource/dm-mono/500-italic.css",
+              "node_modules/@feel/style/main.scss",
+              "src/styles.scss"
+            ],
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "node_modules/@feel/style/global"
+              ]
+            }
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "configurations": {
+            "production": {
+              "browserTarget": "lf-frontend:build:production"
+            },
+            "development": {
+              "browserTarget": "lf-frontend:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "lf-frontend:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": [
+              "zone.js",
+              "zone.js/testing"
+            ],
+            "tsConfig": "tsconfig.spec.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              "src/favicon.ico",
+              "src/assets",
+              "src/id_ed25519.pub",
+              "src/0x3DF81C6A.asc"
+            ],
+            "styles": [
+              "node_modules/@fontsource/dm-sans/400.css",
+              "node_modules/@fontsource/dm-sans/400-italic.css",
+              "node_modules/@fontsource/dm-sans/700.css",
+              "node_modules/@fontsource/dm-sans/700-italic.css",
+              "node_modules/@fontsource/dm-mono/400.css",
+              "node_modules/@fontsource/dm-mono/400-italic.css",
+              "node_modules/@fontsource/dm-mono/500.css",
+              "node_modules/@fontsource/dm-mono/500-italic.css",
+              "node_modules/@feel/style/main.scss",
+              "src/styles.scss"
+            ],
+            "scripts": [],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "node_modules/@feel/style/global"
+              ]
+            }
+          }
+        },
+        "server": {
+          "builder": "@angular-devkit/build-angular:server",
+          "options": {
+            "outputPath": "dist/lf-frontend/server",
+            "main": "server.ts",
+            "tsConfig": "tsconfig.server.json",
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "node_modules/@feel/style/global"
+              ]
+            },
+            "inlineStyleLanguage": "scss"
+          },
+          "configurations": {
+            "production": {
+              "outputHashing": "media"
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "sourceMap": true,
+              "extractLicenses": false,
+              "vendorChunk": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve-ssr": {
+          "builder": "@nguniversal/builders:ssr-dev-server",
+          "configurations": {
+            "development": {
+              "browserTarget": "lf-frontend:build:development",
+              "serverTarget": "lf-frontend:server:development"
+            },
+            "production": {
+              "browserTarget": "lf-frontend:build:production",
+              "serverTarget": "lf-frontend:server:production"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "prerender": {
+          "builder": "@nguniversal/builders:prerender",
+          "options": {
+            "routes": [
+              "/"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "lf-frontend:build:production",
+              "serverTarget": "lf-frontend:server:production"
+            },
+            "development": {
+              "browserTarget": "lf-frontend:build:development",
+              "serverTarget": "lf-frontend:server:development"
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": false
+  }
+}
