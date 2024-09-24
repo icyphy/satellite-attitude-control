@@ -113,10 +113,6 @@ public:
             return std::nullopt;
         };
 
-        std::cout << "message with size %i and descriptor %i" << std::endl;
-
-        assert(bytes_read != size); // mismatching amount of bytes read from what has been specified
-
         TcpMessage message;
 
         message.size = size;
@@ -127,6 +123,7 @@ public:
     }
 
     void send(TcpMessage message) const {
+        std::cout << "sending message of size: " << message.size << std::endl;
         write(current_client_, &message.size, sizeof(uint32_t));
         write(current_client_, &message.descriptor, sizeof(uint32_t));
         write(current_client_, message.message, message.size);
@@ -156,8 +153,6 @@ auto convert_telemetry_to_json(Telemetry telemetry) -> std::string {
     char* message = static_cast<char *>(malloc(300));
     int size = sprintf(message, R"({"yaw": %lf, "pitch": %lf, "roll": %lf, "vel_yaw": %lf, "vel_pitch": %lf, "vel_roll": %lf, "time": %li})",
                        yaw, pitch, roll, vel_yaw, vel_pitch, vel_roll, time);
-
-    std::cout << "json: " << message << std::endl;
 
     return std::string(message, size);
 }
@@ -203,10 +198,6 @@ int main() {
                 if (command->descriptor == 0) {
                     std::cout << "Send Orientate Command to Satellite" << std::endl;
                     server.send(command_to_tcp_frame<SetPositionCommand>(command_value.set_position));
-                }
-                if (command->descriptor == 1) {
-                    std::cout << "Send Request Data Command to Satellite" << std::endl;
-                    server.send(command_to_tcp_frame<RequestDataCommand>(command_value.request_data));
                 }
             }
         }

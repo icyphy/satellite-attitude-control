@@ -152,11 +152,8 @@ void BroadcastServer::send_message(const std::string &message) noexcept {
     // lock connection list and yeet the waypoint to all peers
     {
         std::lock_guard<std::mutex> guard(connection_lock_);
-        std::cout <<"size(con):" << connections_.size() << "send:" << message << std::endl;
-        //connection_list::iterator it;
 
         // we only send it to the connection with corresponding session id and not all connections
-
         for (auto &connection: connections_) {
             server_.send(connection.hdl_, message, websocketpp::frame::opcode::TEXT);
         }
@@ -169,7 +166,6 @@ void BroadcastServer::kill() noexcept {
 
 auto BroadcastServer::get_command() -> std::optional<Command> {
     std::lock_guard<std::mutex> lock(command_lock_);
-    std::cout << "command queue:" << received_commands_.size() << std::endl;
 
     if (received_commands_.empty()) {
         return std::nullopt;

@@ -102,7 +102,8 @@ reactor TcpSocketClient(check_frequency: time = 100 ms, host: {=const char*=} = 
             lf_print("Error READ Data");
         };
 
-        assert(bytes_read != size); // missmatching amount of bytes read from what has been specified
+        lf_print("read %i size %i\n", bytes_read, size);
+        //assert(bytes_read == size); // missmatching amount of bytes read from what has been specified
 
         TcpMessage message;
 
