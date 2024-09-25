@@ -52,7 +52,7 @@ public:
     connection_hdl hdl_;
     std::string name_;
 
-    Connection(connection_hdl&& hdl) : hdl_(std::move(hdl)){
+    explicit Connection(connection_hdl&& hdl) : hdl_(std::move(hdl)){
         name_ = names[rand() % 4];
     }
 };

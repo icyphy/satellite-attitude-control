@@ -25,6 +25,12 @@ BroadcastServer::BroadcastServer() noexcept {
         on_message(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2));
     });
 
+    server_.clear_access_channels(websocketpp::log::alevel::frame_header | websocketpp::log::alevel::frame_payload);
+    // this will turn off console output for frame header and payload
+
+    server_.clear_access_channels(websocketpp::log::alevel::all);
+    // this will turn off everything in console output
+
 }
 
 BroadcastServer::~BroadcastServer() noexcept {
