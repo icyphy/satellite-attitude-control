@@ -56,8 +56,8 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
   private yposRef!: ElementRef;
   @ViewChild('zpos')
   private zposRef!: ElementRef;
-  @ViewChild('time')
-  private timeRef!: ElementRef;
+  //@ViewChild('time')
+  //private timeRef!: ElementRef;
 
 
   @Input() public framePeriod: number = 0.025;
@@ -190,7 +190,7 @@ export class SatelliteComponent implements OnInit, OnDestroy, AfterViewInit{
       this.xposRef.nativeElement.innerText = receivedMessage.yaw;
       this.yposRef.nativeElement.innerText = receivedMessage.pitch;
       this.zposRef.nativeElement.innerText = receivedMessage.roll;
-      this.timeRef.nativeElement.innerText = receivedMessage.time;
+      //this.timeRef.nativeElement.innerText = receivedMessage.time;
     });
 
     this.clock = new THREE.Clock();

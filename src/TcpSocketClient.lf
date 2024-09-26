@@ -69,7 +69,7 @@ reactor TcpSocketClient(check_frequency: time = 100 ms, host: {=const char*=} = 
         int bytes_available;
         ioctl(self->fd,FIONREAD,&bytes_available);
 
-        //lf_print("bytes available %i", bytes_available);
+        lf_print("bytes available %i", bytes_available);
         if (bytes_available <= 8) {
             return;
         }
@@ -86,7 +86,11 @@ reactor TcpSocketClient(check_frequency: time = 100 ms, host: {=const char*=} = 
             lf_print("Error READ Size");
         };
 
-        size = convert_if_necessary(size);
+        lf_print("size %i\n", size);
+        fflush(stdout);
+        //size = convert_if_necessary(size);
+        lf_print("size %i\n", size);
+        fflush(stdout);
 
         if (read(self->fd, &descriptor, sizeof(uint32_t)) < 4) {
             // problem less then 4 bytes read
@@ -94,7 +98,8 @@ reactor TcpSocketClient(check_frequency: time = 100 ms, host: {=const char*=} = 
             lf_print("Error READ Descriptor");
         };
 
-        descriptor = convert_if_necessary(descriptor);
+
+        //descriptor = convert_if_necessary(descriptor);
 
         if (bytes_read = read(self->fd, data, size) < 0) {
             // problem returned -1
@@ -102,7 +107,6 @@ reactor TcpSocketClient(check_frequency: time = 100 ms, host: {=const char*=} = 
             lf_print("Error READ Data");
         };
 
-        lf_print("read %i size %i\n", bytes_read, size);
         //assert(bytes_read == size); // missmatching amount of bytes read from what has been specified
 
         TcpMessage message;

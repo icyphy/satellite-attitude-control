@@ -22,7 +22,7 @@ private:
     int current_client_ = 0;
     short port_ = 31812;
     const char* host_ = "0.0.0.0";
-
+    int flag_ = 1;
 public:
     TcpServer() {
         struct sockaddr_in serv_addr;
@@ -32,6 +32,7 @@ public:
             exit(1);
         }
 
+        setsockopt(socket_, IPPROTO_TCP, TCP_NODELAY, (char *) &flag_, sizeof(int));
         // configure the socket to be non-blocking
         //fcntl(self->fd, F_SETFL, fcntl(self->fd, F_GETFL) | O_NONBLOCK);
 
@@ -193,12 +194,18 @@ int main() {
             auto command = websocket.get_command();
 
             if (command.has_value()) {
-                std::cout << "sending command: " << command->descriptor << std::endl;
                 auto command_value = command.value();
-                if (command->descriptor == 0) {
-                    std::cout << "Send Orientate Command to Satellite" << std::endl;
-                    server.send(command_to_tcp_frame<SetPositionCommand>(command_value.set_position));
-                }
+                std::cout << "Send Orientate Command to Satellite" << std::endl;
+
+                char buffer[sizeof(SetPositionCommand) + 1];
+                memcpy(buffer, &command_value.set_position, sizeof(SetPositionCommand) + 1);
+
+                TcpMessage tcp_message;
+                tcp_message.size = sizeof(SetPositionCommand);
+                tcp_message.message = buffer;
+                tcp_message.descriptor = 0;
+
+                server.send(tcp_message);
             }
         }
     }

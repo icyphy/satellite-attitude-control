@@ -123,30 +123,17 @@ void BroadcastServer::process_messages() noexcept {
                 std::string message = R"({"username": ")" + conn->name_ + "\"}";
                 this->send_message(message);
                 if (result["descriptor"] == 0 && result.contains("yaw") && result.contains("pitch") && result.contains("roll")) {
-                    auto* command_body = new SetPositionCommand[1];
-                    command_body->yaw = result["yaw"];
-                    command_body->pitch = result["pitch"];
-                    command_body->roll = result["roll"];
-
                     Command command;
                     command.descriptor = 0;
-                    command.set_position = command_body;
+                    command.set_position.yaw = result["yaw"];
+                    command.set_position.pitch = result["pitch"];
+                    command.set_position.roll = result["roll"];
 
                     std::lock_guard<std::mutex> command_lock(command_lock_);
-                    received_commands_.insert(received_commands_.begin(), command);
-                } else if (result["descriptor"] == 1) {
-                    auto* command_body = new RequestDataCommand[1];
-                    command_body->amount = result["amount"];
-
-                    Command command;
-                    command.descriptor = 1;
-                    command.request_data = command_body;
-
-                    std::lock_guard<std::mutex> command_lock(command_lock_);
-                    received_commands_.insert(received_commands_.begin(), command);
+                    received_commands_.push_back(command);
                 } else {
                     std::cout << "user didn't specify all necessary values" << std::endl;
-                };
+                }
             }
         } else {
             // undefined.
@@ -176,7 +163,7 @@ auto BroadcastServer::get_command() -> std::optional<Command> {
     if (received_commands_.empty()) {
         return std::nullopt;
     } else {
-        auto value = *received_commands_.end();
+        auto value = received_commands_[received_commands_.size() - 1];
         received_commands_.pop_back();
         return value;
     }

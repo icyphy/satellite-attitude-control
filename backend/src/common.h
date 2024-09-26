@@ -50,8 +50,7 @@ typedef struct {
 class Command {
 public:
     uint32_t descriptor = 0;
-    RequestDataCommand* request_data = nullptr;
-    SetPositionCommand*  set_position = nullptr;
+    SetPositionCommand set_position;
 };
 
 #endif //WEBSOCKET_PROXY_COMMON_H

@@ -74,7 +74,7 @@ reactor Process {
         self->desired_yaw = command_struct.yaw;
         self->desired_roll = command_struct.roll;
 
-        //lf_set(to_satellite, x);
+        lf_print("pitch %f yaw %f roll %f", self->desired_pitch, self->desired_yaw, self->desired_roll);
         break;
       default:
         lf_print("unknown descriptor received %d", value.descriptor);
@@ -123,8 +123,8 @@ main reactor {
   process = new Process()
   //receiveFromReactionWheel = new TcpSocketServer(host="127.0.0.1", port=31811);
   // receiveFromReactionWheel = new TcpSocketServer(host="192.168.123.111", port=31811);
-  //sendToGroundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
-  sendToGroundstation = new TcpSocketClient(host="88.198.121.105", port=31812); // Tassilo's server
+  sendToGroundstation = new TcpSocketClient(host="127.0.0.1", port=31812);
+  //sendToGroundstation = new TcpSocketClient(host="88.198.121.105", port=31812); // Tassilo's server
   //sendToGroundstation = new TcpSocketClient(host="192.168.123.125", port=31812);
   
   process.telemetry_out -> process.telemetry_in
