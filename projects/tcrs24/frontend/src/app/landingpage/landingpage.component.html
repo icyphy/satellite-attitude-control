@@ -1,7 +1,7 @@
 <div class="container">
   <div class="elements">
     <div class="hero">
-      <h1>Building Deterministic and Concurrent Flight Software using Lingua Franca and PretVM</h1>
+      <h1>Navigating Time and Energy Trade-Offs in Reactive Heterogeneous Systems</h1>
     </div>
 
     <div class="authors">
@@ -14,67 +14,45 @@
         <a class="typography" href="mailto:tassilo.tanneberger@tu-dresden.de"><small>tassilo.tanneberger&#64;tu-dresden.de</small></a>
       </div>
       <div class="author">
-        <b>Erling Jellum</b>
-        <a class="typography" href="mailto:erling.r.jellum@ntnu.no"><small>erling.r.jellum&#64;ntnu.no</small></a>
+        <b>Jiahong Bi</b>
+        <a class="typography" href="mailto:jiahong.bi@tu-dresden.de"><small>jiahong.bi&#64;tu-dresden.de</small></a>
       </div>
       <div class="author">
-        <b>Edward Lee</b>
-        <a class="typography" href="mailto:eal@berkeley.edu"><small>eal&#64;berkeley.edu</small></a>
+        <b>Guangyu Feng</b>
+        <a class="typography" href="mailto:guangyu_feng@berkeley.edu"><small>guangyu_feng&#64;berkeley.edu</small></a>
+      </div>
+      <div class="author">
+        <b>Yimo Xu</b>
+        <a class="typography" href="mailto:xuyimo@berkeley.edu"><small>xuyimo&#64;berkeley.edu</small></a>
+      </div>
+      <div class="author">
+        <b>Julain Robledo</b>
+        <a class="typography" href="mailto:robledo.julian@tu-dresden.de"><small>reobledo.julian&#64;tu-dresden.de</small></a>
+      </div>
+      <div class="author">
+        <b>Robert Khasanov</b>
+        <a class="typography" href="mailto:khasanov.robert@tu-dresden.de"><small>khasanov.robert&#64;tu-dresden.de</small></a>
+      </div>
+      <div class="author">
+        <b>Castrillon, Jeronimo</b>
+        <a class="typography" href="mailto:jeronimo.castrillon@tu-dresden.de"><small>jeronimo.castrillon&#64;tu-dresden.de</small></a>
       </div>
     </div>
 
     <div class="body">
-
-      <h3>Introduction</h3>
-      <p>
-        Flight software is becoming increasingly complex and
-        unyielding as mission profiles and spacecraft become more sophisticated. We live
-        in an age where many full or partial mission failures are caused by
-        faulty software<a href="#NasaSat">[1]</a>. To improve the reliability and performance of
-        future space flight software, we advocate for the adoption of
-        Lingua Franca (LF), a programming model for deterministic, concurrent, and
-        real-time Cyber-Physical Systems (CPS). We also propose the use of PretVM, an execution backend for LF
-        capable of implementing verifiable real-time behavior and optimizations. We will use
-        these two concepts to develop a controller for an attitude control system.
-      </p>
-
-      <h3>Background</h3>
-      <p>
-        Lingua Franca is a polyglot coordination language that offers
-        deterministic concurrency and timing semantics<a href="#Lohstroh2019">[2]</a>. With this
-        programming model, the programmer no longer has to worry about race conditions
-        and other concurrency problems and can focus on the application logic. LF also removes
-        the gap between "model" and "code" by allowing the
-        same LF code to run both in simulation and on the real hardware.
-        It's known that a subset of LF programs that are driven by timers can be compiled
-        down to quasi-static schedules that can be executed on PretVM.
-        PretVM<a href="#PretVM">[3]</a> is a register-based virtual machine built to
-        fascilitate the scheduling and timing of concurrent tasks. Its virtual
-        instruction set contains standard instructions such as <em>ADD</em> and <em>BEQ</em>
-        borrowed from RISC-V. The PretVM instruction set also includes timing
-        instructions, such as <em>DU</em> (delay until) and <em>WU</em> (wait until), which are inspired
-        by PRET Machines<a href="#PretVM">[3]</a>.
-        PretVM can be used as an execution backend for LF. External
-        tools, include the Edge Generation Scheduler<a href="#EGS">[4]</a> and Mocasin<a href="#mocasin">[5]</a>, can
-        be used to guide the generation of quasi-static schedules.
-      </p>
-
-      <h3>Contribution</h3>
-      <p>
-        In this presentation, we show that LF and PretVM
-        have the potential to support future space flight software by developing a
-        real-time controller for a three-axis reaction wheel system, which is used for
-        attitude control of spacecraft. LF's determinism enables us to adopt
-        test-driven development when developing the reaction wheel controller. For our
-        reaction wheel system, we identify a real-time task set and a
-        non-real-time task set. We show that, given that both sets are
-        sufficiently decoupled, the real-time tasks can be scheduled on PretVM with
-        verifiable real-time guarantees with the Edge Generation Scheduler. Similarly,
-        with Mocasin, the non-real-time tasks can be scheduled optimally w.r.t. makespan
-        and energy consumption.
-      </p>
-
+      Reactive software poses stringent and comprehensive requirements: deterministic execution
+      with stringent timing constraints under a tight energy budget. Meeting these requirements
+      is particularly challenging when executing on the increasingly heterogeneous platforms of
+      today. In this paper, we integrate MOCASIN, a design space exploration tool, into
+      LINGUA FRANCA, a programming framework for building deterministic and timed reactive
+      software. We show that this integration enables choosing a desired timing and energy
+      performance at design time. We demonstrate our approach in a satellite attitude control
+      application consisting of periodic real-time tasks and sporadic non-real-time tasks. The
+      latter sporadic tasks are coordinated using quasi-static schedules, computed by MOCASIN,
+      leading to less energy consumption compared to the Linux scheduler under CPU frequency
+      scaling governors such as powersave, schedutil, and ondemand.
     </div>
+
     <div class="links">
       <feel-button routerLink="satellite"><b class="demo-button">Demo!</b></feel-button>
       <feel-button link="https://github.com/icyphy/satellite-attitude-control"><app-icon-github/>Github</feel-button>
@@ -87,18 +65,225 @@
       <app-card [inverseShadow]="true" backgroundImage="/assets/images/tud.webp" link="https://cs.tu-dresden.de">
         <app-icon-tud class="logo"></app-icon-tud>
       </app-card>
-      <app-card [inverseShadow]="true" backgroundImage="/assets/images/ntnu-bg.webp" link="https://ntnu.no">
-        <app-icon-ntnu class="logo"></app-icon-ntnu>
-      </app-card>
     </div>
     <div>
       <b>Bibliography</b>
-
       <table>
 
         <tr valign="top">
           <td align="right" class="bibtexnumber">
-            [<a name="Lohstroh2019">1</a>]
+            [<a name="todorov2012mujoco">1</a>]
+          </td>
+          <td class="bibtexitem">
+            Emanuel Todorov, Tom Erez, and Yuval Tassa.
+            Mujoco: A physics engine for model-based control.
+            In <em>2012 IEEE/RSJ International Conference on Intelligent Robots
+            and Systems</em>, pages 5026--5033. IEEE, 2012.
+            [&nbsp;<a href="refs_bib.html#todorov2012mujoco">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1109/IROS.2012.6386109">DOI</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="thiele2007-mapping-applicat">2</a>]
+          </td>
+          <td class="bibtexitem">
+            Lothar Thiele, Iuliana Bacivarov, Wolfgang Haid, and Kai Huang.
+            Mapping applications to tiled multiprocessor embedded systems.
+            In <em>Seventh International Conference on Application of
+            Concurrency to System Design (ACSD 2007)</em>, pages 29--40, 2007.
+            [&nbsp;<a href="refs_bib.html#thiele2007-mapping-applicat">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1109/ACSD.2007.53">DOI</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="schor2012-scenario-based">3</a>]
+          </td>
+          <td class="bibtexitem">
+            Lars Schor, Iuliana Bacivarov, Devendra Rai, Hoeseok Yang, Shin-Haeng Kang, and
+            Lothar Thiele.
+            Scenario-based design flow for mapping streaming applications onto
+            on-chip many-core systems.
+            In <em>Proceedings of the 2012 International Conference on
+            Compilers, Architectures and Synthesis for Embedded Systems</em>, CASES '12, page
+            71–80, New York, NY, USA, 2012. Association for Computing Machinery.
+            [&nbsp;<a href="refs_bib.html#schor2012-scenario-based">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1145/2380403.2380422">DOI</a>&nbsp;|
+            <a href="https://doi.org/10.1145/2380403.2380422">http</a>&nbsp;]
+            <blockquote><font size="-1">
+              Keywords: on-chip many-core systems, mpsoc, mapping optimization, scenario-based model of computation, design flow
+            </font></blockquote>
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="leupers2010-mpsoc-programm">4</a>]
+          </td>
+          <td class="bibtexitem">
+            Rainer Leupers and Jeronimo Castrillon.
+            MPSoC programming using the MAPS compiler.
+            In <em>Proceedings of the 2010 Asia and South Pacific Design
+            Automation Conference</em>, ASPDAC '10, pages 897--902. IEEE Press, 2010.
+            [&nbsp;<a href="refs_bib.html#leupers2010-mpsoc-programm">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="pelcat2014-preesm">5</a>]
+          </td>
+          <td class="bibtexitem">
+            Maxime Pelcat, Karol Desnos, Julien Heulot, Clément Guy, Jean-François Nezan,
+            and Slaheddine Aridhi.
+            Preesm: A dataflow-based rapid prototyping framework for simplifying
+            multicore dsp programming.
+            In <em>2014 6th European Embedded Design in Education and Research
+            Conference (EDERC)</em>, pages 36--40, 2014.
+            [&nbsp;<a href="refs_bib.html#pelcat2014-preesm">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1109/EDERC.2014.6924354">DOI</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="pimentel2006-systemat-approach">6</a>]
+          </td>
+          <td class="bibtexitem">
+            Andy Pimentel, Cagkan Erbas, and Simon Polstra.
+            A systematic approach to exploring embedded system architectures at
+            multiple abstraction levels.
+            <em>IEEE Transactions on Computers</em>, 55(2):99--112, 2006.
+            [&nbsp;<a href="refs_bib.html#pimentel2006-systemat-approach">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="keinert2009-systemcod-automatic">7</a>]
+          </td>
+          <td class="bibtexitem">
+            Joachim Keinert, Martin Streubuhr, Thomas Schlichter, Joachim Falk, Jens
+            Gladigau, Christian Haubelt, Jurgen Teich, and Michael Meredith.
+            SystemCoDesigner—an automatic esl synthesis approach by design
+            space exploration and behavioral synthesis for streaming applications.
+            <em>ACM Trans. Des. Autom. Electron. Syst.</em>, 14(1), jan 2009.
+            [&nbsp;<a href="refs_bib.html#keinert2009-systemcod-automatic">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1145/1455229.1455230">DOI</a>&nbsp;|
+            <a href="https://doi.org/10.1145/1455229.1455230">http</a>&nbsp;]
+            <blockquote><font size="-1">
+              Keywords: hardware/software codesign, System design
+            </font></blockquote>
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="brunet2013turnus">8</a>]
+          </td>
+          <td class="bibtexitem">
+            S.&nbsp;Casale-Brunet, M.&nbsp;Wiszniewska, E.&nbsp;Bezati, M.&nbsp;Mattavelli, J.&nbsp;W. Janneck, and
+            M.&nbsp;Canale.
+            Turnus: An open-source design space exploration framework for dynamic
+            stream programs.
+            In <em>Proceedings of the 2014 Conference on Design and
+            Architectures for Signal and Image Processing</em>, 2014.
+            [&nbsp;<a href="refs_bib.html#brunet2013turnus">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1109/DASIP.2014.7115614">DOI</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="menard2021HiPEAC">9</a>]
+          </td>
+          <td class="bibtexitem">
+            Christian Menard, Andr&eacute;s Goens, Gerald Hempel, Robert Khasanov, Julian
+            Robledo, Felix Teweleitt, and Jeronimo Castrillon.
+            Mocasin—rapid prototyping of rapid prototyping tools: A framework
+            for exploring new approaches in mapping software to heterogeneous
+            multi-cores.
+            In <em>Proceedings of the 2021 Drone Systems Engineering and Rapid
+            Simulation and Performance Evaluation: Methods and Tools Proceedings</em>,
+            DroneSE and RAPIDO '21, 2021.
+            [&nbsp;<a href="refs_bib.html#menard2021HiPEAC">bib</a>&nbsp;]
+            <blockquote><font size="-1">
+              We present Mocasin, an open-source rapid prototyping framework for researching, implementing and validating new algorithms and solutions in the field of mapping software to heterogeneous multi-cores. In contrast to the many existing tools that often specialize for a particular use-case, Mocasin is an open, flexible and generic research environment that abstracts over the approaches taken by other tools. Mocasin is designed to support a wide range of models of computation and input formats, implements manifold mapping strategies and provides an adjustable high-level simulator for performance estimation. This infrastructure serves as a flexible vehicle for exploring new approaches and as a blueprint for building customized tools. We highlight the key design aspects of Mocasin that enable its flexibility and illustrate its capabilities in a case-study showing how Mocasin can be used for building a customized tool for researching runtime mapping strategies in an LTE uplink receiver.
+            </font></blockquote>
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="Lee87">10</a>]
+          </td>
+          <td class="bibtexitem">
+            Edward&nbsp;A. Lee and David&nbsp;G. Messerschmitt.
+            Synchronous data flow.
+            <em>Proceedings of the IEEE</em>, 75(9):1235--1245, 1987.
+            [&nbsp;<a href="refs_bib.html#Lee87">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1109/PROC.1987.13876">DOI</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="castrillon2014">11</a>]
+          </td>
+          <td class="bibtexitem">
+            Jerónimo Castrillón and Rainer Leupers.
+            <em>Programming Heterogeneous MPSoCs: Tool Flows to Close the
+              Software Productivity Gap</em>.
+            01 2014.
+            [&nbsp;<a href="refs_bib.html#castrillon2014">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1007/978-3-319-00675-8">DOI</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="Kahn74">12</a>]
+          </td>
+          <td class="bibtexitem">
+            Gilles Kahn.
+            The semantics of a simple language for parallel programming.
+            In Jack&nbsp;L. Rosenfeld, editor, <em>Information Processing,
+            Proceedings of the 6th IFIP Congress 1974, Stockholm, Sweden, August 5-10,
+            1974</em>, pages 471--475. North-Holland, 1974.
+            [&nbsp;<a href="refs_bib.html#Kahn74">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="Lohstroh:2019:CyPhy">13</a>]
           </td>
           <td class="bibtexitem">
             Marten Lohstroh, &Iacute;&ntilde;igo&nbsp;&Iacute;ncer Romero, Andr&eacute;s Goens, Patricia
@@ -110,7 +295,7 @@
               Workshop on Design, Modeling and Evaluation of Cyber Physical Systems (CyPhy
               2019) and the Workshop on Embedded and Cyber-Physical Systems Education (WESE
               2019)</em>, pages 59--85, Cham, February 2020. Springer International Publishing.
-            [&nbsp;<a href="refs_bib.html#Lohstroh2019">bib</a>&nbsp;|
+            [&nbsp;<a href="refs_bib.html#Lohstroh:2019:CyPhy">bib</a>&nbsp;|
             <a href="http://dx.doi.org/10.1007/978-3-030-41131-2\_4">DOI</a>&nbsp;|
             <a href="https://link.springer.com/chapter/10.1007/978-3-030-41131-2\_4">http</a>&nbsp;]
 
@@ -120,52 +305,34 @@
 
         <tr valign="top">
           <td align="right" class="bibtexnumber">
-            [<a name="LohstrohEtAl20LF">2</a>]
+            [<a name="lin2024pretvm">14</a>]
           </td>
           <td class="bibtexitem">
-            Marten Lohstroh, Christian Menard, Alexander Schulz-Rosengarten, Matthew Weber,
-            Jeronimo Castrillon, and Edward&nbsp;A. Lee.
-            A language for deterministic coordination across multiple timelines.
-            In <em>Forum for Specification and Design Languages (FDL)</em>. IEEE,
-            September 15-17 2020.
-            [&nbsp;<a href="refs_bib.html#LohstrohEtAl20LF">bib</a>&nbsp;|
-            <a href="https://ieeexplore.ieee.org/document/9232939">DOI</a>&nbsp;]
-          </td>
-        </tr>
+            Shaokai Lin, Erling Jellum, Mirco Theile, Tassilo Tanneberger, Binqi Sun,
+            Chadlia Jerad, Ruomu Xu, Guangyu Feng, Christian Menard, Marten Lohstroh,
+            Jeronimo Castrillon, Sanjit Seshia, and Edward Lee.
+            PretVM: Predictable, Efficient Virtual Machine for
+            Real-Time Concurrency, 2024.
+            [&nbsp;<a href="refs_bib.html#lin2024pretvm">bib</a>&nbsp;|
+            <a href="http://arxiv.org/abs/2406.06253">arXiv</a>&nbsp;]
 
-        <tr valign="top">
-          <td align="right" class="bibtexnumber">
-            [<a name="NasaSat">3</a>]
-          </td>
-          <td class="bibtexitem">
-            Stephen&nbsp;A. Jacklin.
-            Small-satellite mission failure rates.
-            Technical Report NASA/TM—2018– 220034, NASA Ames Research Center,
-            Moffett Field, CA, march 2019.
-            [&nbsp;<a href="refs_bib.html#NasaSat">bib</a>&nbsp;]
-            [<a href="https://ntrs.nasa.gov/api/citations/20190002705/downloads/20190002705.pdf">PDF</a>&nbsp;]
           </td>
         </tr>
 
 
         <tr valign="top">
           <td align="right" class="bibtexnumber">
-            [<a name="PRET">4</a>]
+            [<a name="sdf3">15</a>]
           </td>
           <td class="bibtexitem">
-            Stephen&nbsp;A. Edwards and Edward&nbsp;A. Lee.
-            The case for the precision timed (pret) machine.
-            In <em>Proceedings of the 44th Annual Design Automation Conference</em>,
-            DAC '07, page 264–265, New York, NY, USA, 2007. Association for Computing
-            Machinery.
-            [&nbsp;<a href="refs_bib.html#PRET">bib</a>&nbsp;|
-            <a href="http://dx.doi.org/10.1145/1278480.1278545">DOI</a>&nbsp;|
-            <a href="https://doi.org/10.1145/1278480.1278545">http</a>&nbsp;]
+            S.&nbsp;Stuijk, M.&nbsp;Geilen, and T.&nbsp;Basten.
+            SDF<sup>3</sup>: SDF For Free.
+            In <em>Proceedings of the Sixth International Conference on
+            Application of Concurrency to System Design (ACSD'06)</em>, pages 276--278, 2006.
+            [&nbsp;<a href="refs_bib.html#sdf3">bib</a>&nbsp;|
+            <a href="http://dx.doi.org/10.1109/ACSD.2006.23">DOI</a>&nbsp;]
             <blockquote><font size="-1">
-              Patterson and Ditzel [12] did not invent reduced instruction set computers (RISC) in 1980. Earlier computers all had reduced instruction sets. Instead, they argued that trends in computer architecture had gotten off the sweet spot, and that by dropping back a few years and forking a new version of architectures, leveraging what had been learned, they could get better computers by employing simpler instruction sets.
-            </font></blockquote>
-            <blockquote><font size="-1">
-              Keywords: real-time embedded systems, predicable timing
+              Keywords: System recovery;Visualization;Digital signal processing;Fires;Synchronous generators;Libraries;Algorithm design and analysis;Pipeline processing;Testing;Writing
             </font></blockquote>
 
           </td>
@@ -174,18 +341,77 @@
 
         <tr valign="top">
           <td align="right" class="bibtexnumber">
-            [<a name="EGS">5</a>]
+            [<a name="Henzinger:02:EMachine">16</a>]
           </td>
           <td class="bibtexitem">
-            Binqi Sun, Mirco Theile, Ziyuan Qin, Daniele Bernardini, Debayan Roy, Andrea
-            Bastoni, and Marco Caccamo.
-            Edge generation scheduling for dag tasks using deep reinforcement
-            learning.
-            <em>IEEE Transactions on Computers</em>, pages 1--14, 2024.
-            [&nbsp;<a href="refs_bib.html#EGS">bib</a>&nbsp;|
-            <a href="http://dx.doi.org/10.1109/TC.2024.3350243">DOI</a>&nbsp;]
+            Thomas&nbsp;A. Henzinger and Christoph&nbsp;M. Kirsch.
+            The embedded machine: Predictable, portable realtime code.
+            In <em>International Conference on Programming Language Design and
+            Implementation (PLDI)</em>, pages 315--326. ACM Press, 2002.
+            [&nbsp;<a href="refs_bib.html#Henzinger:02:EMachine">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="schoeberl2018patmos">17</a>]
+          </td>
+          <td class="bibtexitem">
+            Martin Schoeberl, Wolfgang Puffitsch, Stefan Hepp, Benedikt Huber, and Daniel
+            Prokesch.
+            Patmos: A time-predictable microprocessor.
+            <em>Real-Time Systems</em>, 54:389--423, 2018.
+            [&nbsp;<a href="refs_bib.html#schoeberl2018patmos">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="hepp2015platin">18</a>]
+          </td>
+          <td class="bibtexitem">
+            Stefan Hepp, Benedikt Huber, Jens Knoop, Daniel Prokesch, and Peter&nbsp;P Puschner.
+            The platin tool kit-the t-crest approach for compiler and wcet
+            integration.
+            In <em>Proceedings 18th Kolloquium Programmiersprachen und
+            Grundlagen der Programmierung, KPS</em>, pages 5--7, 2015.
+            [&nbsp;<a href="refs_bib.html#hepp2015platin">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="absinttool">19</a>]
+          </td>
+          <td class="bibtexitem">
+            The industry standard for static timing analysis.
+            [&nbsp;<a href="refs_bib.html#absinttool">bib</a>&nbsp;|
+            <a href="https://www.absint.com/ait/index.htm">http</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="lohstroh2021lf">20</a>]
+          </td>
+          <td class="bibtexitem">
+            Marten Lohstroh, Christian Menard, Soroush Bateni, and Edward&nbsp;A. Lee.
+            Toward a lingua franca for deterministic concurrent systems.
+            <em>ACM Trans. Embed. Comput. Syst.</em>, 20(4), may 2021.
+            [&nbsp;<a href="refs_bib.html#lohstroh2021lf">bib</a>&nbsp;]
             <blockquote><font size="-1">
-              Keywords: Task analysis;Processor scheduling;Job shop scheduling;Program processors;Real-time systems;Dispatching;Time factors;DAG scheduling;real-time;edge generation;deep reinforcement learning
+              Many programming languages and programming frameworks focus on parallel and distributed computing. Several frameworks are based on actors, which provide a more disciplined model for concurrency than threads. The interactions between actors, however, if not constrained, admit nondeterminism. As a consequence, actor programs may exhibit unintended behaviors and are less amenable to rigorous testing. We show that nondeterminism can be handled in a number of ways, surveying dataflow dialects, process networks, synchronous-reactive models, and discrete-event models. These existing approaches, however, tend to require centralized control, pose challenges to modular system design, or introduce a single point of failure. We describe “reactors,” a new coordination model that combines ideas from several of these approaches to enable determinism while preserving much of the style of actors. Reactors promote modularity and allow for distributed execution. By using a logical model of time that can be associated with physical time, reactors also provide control over timing. Reactors also expose parallelism that can be exploited on multicore machines and in distributed configurations without compromising determinacy.
+            </font></blockquote>
+            <blockquote><font size="-1">
+              Keywords: determinism, coordination language, concurrency, Polyglot
             </font></blockquote>
 
           </td>
@@ -194,23 +420,15 @@
 
         <tr valign="top">
           <td align="right" class="bibtexnumber">
-            [<a name="mocasin">6</a>]
+            [<a name="Kirsch2012LET">21</a>]
           </td>
           <td class="bibtexitem">
-            Christian Menard, Andr&eacute;s Goens, Gerald Hempel, Robert Khasanov, Julian
-            Robledo, Felix Teweleitt, and Jeronimo Castrillon.
-            Mocasin—rapid prototyping of rapid prototyping tools: A framework
-            for exploring new approaches in mapping software to heterogeneous
-            multi-cores.
-            In <em>Proceedings of the 2021 Drone Systems Engineering and Rapid
-            Simulation and Performance Evaluation: Methods and Tools Proceedings</em>,
-            DroneSE and RAPIDO '21, page 66–73, New York, NY, USA, 2021. Association
-            for Computing Machinery.
-            [&nbsp;<a href="refs_bib.html#mocasin">bib</a>&nbsp;|
-            <a href="http://dx.doi.org/10.1145/3444950.3447285">DOI</a>&nbsp;|
-            <a href="https://doi.org/10.1145/3444950.3447285">http</a>&nbsp;]
+            Christoph&nbsp;M. Kirsch and Ana Sokolova.
+            <em>The Logical Execution Time Paradigm</em>, pages 103--120.
+            Springer Berlin Heidelberg, Berlin, Heidelberg, 2012.
+            [&nbsp;<a href="refs_bib.html#Kirsch2012LET">bib</a>&nbsp;]
             <blockquote><font size="-1">
-              We present Mocasin, an open-source rapid prototyping framework for researching, implementing and validating new algorithms and solutions in the field of mapping software to heterogeneous multi-cores. In contrast to the many existing tools that often specialize for a particular use-case, Mocasin is an open, flexible and generic research environment that abstracts over the approaches taken by other tools. Mocasin is designed to support a wide range of models of computation and input formats, implements manifold mapping strategies and provides an adjustable high-level simulator for performance estimation. This infrastructure serves as a flexible vehicle for exploring new approaches and as a blueprint for building customized tools. We highlight the key design aspects of Mocasin that enable its flexibility and illustrate its capabilities in a case-study showing how Mocasin can be used for building a customized tool for researching runtime mapping strategies in an LTE uplink receiver.
+              Since its introduction in 2000 in the time-triggered programming language Giotto, the Logical Execution Time (LET) paradigm has evolved from a highly controversial idea to a well-understood principle of real-time programming. This chapter provides an easy-to-read overview of LET programming languages and runtime systems as well as some LET-inspired models of computation. The presentation is intuitive, by example, citing the relevant literature including more formal treatment of the material for reference.
             </font></blockquote>
 
           </td>
@@ -219,19 +437,69 @@
 
         <tr valign="top">
           <td align="right" class="bibtexnumber">
-            [<a name="PretVM">7</a>]
+            [<a name="cardoso2022reactionwheel">22</a>]
           </td>
           <td class="bibtexitem">
-            Shaokai Lin, Mirco Thiele, Erling Jellum, Binqi Sun, Chadlia Jerad, Tassilo
-            Tanneberger, Christian Menard, Yimo Xu, Guangyu Feng, Marten Lohstroh,
-            Jeronimo Castrillon, and Edward Lee.
-            Pretvm: Predictable, repeatable, and optimizable real-time code.
-            This work is not yet published.
-            [&nbsp;<a href="refs_bib.html#PretVM">bib</a>&nbsp;]
+            Janette Cardoso, Caroline Chanel, Pascal Chauvin, Alain Hostallier, Jacques
+            Lamaison, Alfonso Mascarenas-Gonzales, Eric Metral, and Laurent Alloza.
+            Lab on the real-time control of reaction wheel.
+            Unpublished lab exercise for the course 1MAE803: Real-time Control of
+            Aerospace Systems, M.Sc in Aerospace Engineering, ISAE-SUPAERO, 2022.
+            [&nbsp;<a href="refs_bib.html#cardoso2022reactionwheel">bib</a>&nbsp;]
 
           </td>
         </tr>
-      </table><hr><p><em>This file was generated by
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="lin2023towards">23</a>]
+          </td>
+          <td class="bibtexitem">
+            Shaokai Lin, Yatin&nbsp;A Manerkar, Marten Lohstroh, Elizabeth Polgreen, Sheng-Jung
+            Yu, Chadlia Jerad, Edward&nbsp;A Lee, and Sanjit&nbsp;A Seshia.
+            Towards building verifiable cps using lingua franca.
+            <em>ACM Transactions on Embedded Computing Systems</em>, 22(5s):1--24,
+            2023.
+            [&nbsp;<a href="refs_bib.html#lin2023towards">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="chrszon2023applicability">24</a>]
+          </td>
+          <td class="bibtexitem">
+            Philipp Chrszon, Paulina Maurer, George Saleip, Sascha M&uuml;ller, Philipp&nbsp;M
+            Fischer, Andreas Gerndt, and Michael Felderer.
+            Applicability of model checking for verifying spacecraft operational
+            designs.
+            In <em>2023 ACM/IEEE 26th International Conference on Model Driven
+            Engineering Languages and Systems (MODELS)</em>, pages 206--216. IEEE, 2023.
+            [&nbsp;<a href="refs_bib.html#chrszon2023applicability">bib</a>&nbsp;]
+
+          </td>
+        </tr>
+
+
+        <tr valign="top">
+          <td align="right" class="bibtexnumber">
+            [<a name="AUTOSAR_TimingAnalysis_2022">25</a>]
+          </td>
+          <td class="bibtexitem">
+            AUTOSAR.
+            Recommended methods and practices for timing analysis and design
+            within the autosar development process.
+            Technical report, AUTOSAR, 2022.
+            [&nbsp;<a href="refs_bib.html#AUTOSAR_TimingAnalysis_2022">bib</a>&nbsp;|
+            <a href="https://www.autosar.org/fileadmin/standards/R22-11/FO/AUTOSAR_TR_TimingAnalysis.pdf">.pdf</a>&nbsp;]
+
+          </td>
+        </tr>
+      </table>
+      <hr><p><em>This file was generated by
       <a href="http://www.lri.fr/~filliatr/bibtex2html/">bibtex2html</a> 1.99.</em></p>
     </div>
   </div>
